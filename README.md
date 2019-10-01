@@ -1,5 +1,5 @@
 # cuFINUFFT-bench
-Benchmarking for cufinufft library
+Benchmarking for cuFINUFFT library
 
 ### CPU code
 - FINUFFT: https://github.com/flatironinstitute/finufft
