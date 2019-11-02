@@ -67,5 +67,7 @@ make PREC=SINGLE lib
 - [Step 1] Install all the libraries
 - [Step 2] Add shared libraries path to LD_LIBRARY_PATH
 
-         `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/finufft/lib:~/CUNFFT/lib:~/cuFINUFFT/lib`
+```
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/finufft/lib:~/CUNFFT/lib:~/cuFINUFFT/lib
+```
 - [Step 3] Execute python scripts
