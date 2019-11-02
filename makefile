@@ -4,6 +4,10 @@ NVCC=nvcc
 
 NVCCFLAGS=-arch=sm_70 --default-stream per-thread
 CXXFLAGS=
+
+FINUFFT=/mnt/home/yshih/finufft
+CUFINUFFT=/mnt/home/yshih/GPUnufftSpreader
+CUNFFT=/mnt/home/yshih/CUNFFT
 #INC=-I/mnt/home/yshih/CUNFFT/src/ \
 	-I/mnt/home/yshih/GPUnufftSpreader/src/ \
 	-I/mnt/home/yshih/finufft/src/
@@ -20,22 +24,22 @@ CXXFLAGS=
 
 cunfft: cunfft_timing.cpp utils.o
 	$(CXX) $^ -DGPU\
-		-I/mnt/home/yshih/CUNFFT/src/\
-		-L/mnt/home/yshih/CUNFFT/lib/\
+		-I$(CUNFFT)/src/\
+		-L$(CUNFFT)/lib/\
 		-lcunfft -lcudart\
 		-o $@
 
 cufinufft: cufinufft_timing.cpp
 	$(NVCC) $^ -DGPU -DSINGLE $(NVCCFLAGS) \
-		-I/mnt/home/yshih/GPUnufftSpreader/src/\
-		-L/mnt/home/yshih/GPUnufftSpreader/lib\
+		-I$(CUFINUFFT)/src/\
+		-L$(CUFINUFFT)/lib\
 		-lcudart -lcufinufftf\
 		-o $@
 
 finufft: finufft_timing.cpp
 	$(CXX) $^ -DSINGLE \
-		-I/mnt/home/yshih/finufft/src \
-		-L/mnt/home/yshih/finufft/lib\
+		-I$(FINUFFT)/src \
+		-L$(FINUFFT)/lib\
 		-lfinufftf -lfftw3_omp\
 		-o $@
 
