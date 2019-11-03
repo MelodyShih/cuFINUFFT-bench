@@ -9,9 +9,9 @@ def main():
 	date = d.strftime('%m%d')
 
 	result_dir="../results/"
-	t_cufinufft = np.load(result_dir+'cufinufft_spread_'+date+'.npy')
-	t_finufft   = np.load(result_dir+'finufft_spread_'+date+'.npy')
-	t_cunfft    = np.load(result_dir+'cunfft_spread_'+date+'.npy')
+	t_cufinufft = np.load(result_dir+'workergpu14_cufinufft_spread_'+date+'.npy')
+	t_finufft   = np.load(result_dir+'worker1160_finufft_spread_'+date+'.npy')
+	t_cunfft    = np.load(result_dir+'workergpu14_cunfft_spread_'+date+'.npy')
 
 	npzfile = np.load(result_dir+'param_'+date+'.npz')
 	dim = 2

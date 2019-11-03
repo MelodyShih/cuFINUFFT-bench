@@ -37,10 +37,10 @@ cufinufft: cufinufft_timing.cpp
 		-o $@
 
 finufft: finufft_timing.cpp
-	$(CXX) $^ -DSINGLE \
+	$(CXX) $^ -DSINGLE -fopenmp\
 		-I$(FINUFFT)/src \
 		-L$(FINUFFT)/lib\
-		-lfinufftf -lfftw3_omp\
+		-lfinufftf -lfftw3f -lfftw3f_omp\
 		-o $@
 
 all: cunfft cufinufft finufft
