@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 	sscanf(argv[4],"%lf",&w); N2 = (int)w;
 	sscanf(argv[5],"%lf",&w); N3 = (int)w;
 	
-	M = N1*N2*N3;// let density always be 1
+	M = 8*N1*N2*N3;// let density always be 1
 	if(argc>6){
 		sscanf(argv[6],"%lf",&w); M  = (int)w;
 	}

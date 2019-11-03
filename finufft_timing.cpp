@@ -24,10 +24,10 @@ int main(int argc, char *argv[]){
 	sscanf(argv[4],"%lf",&w); N2 = (int)w;
 	sscanf(argv[5],"%lf",&w); N3 = (int)w;
 	N = N1*N2*N3;
+	M = 8*N1*N2*N3;// let density always be 1
 	if(argc>6){
 		sscanf(argv[6],"%lf",&w); M  = (int)w;
 	}
-	M = 8*N1*N2*N3;// let density always be 1
 
 	FLT tol=1e-6;// desired accuracy
 	if(argc>7){
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
 
 	nufft_opts opts; 
 	finufft_default_opts(&opts);
-	opts.debug = 1;// some timing results
+	opts.debug = 2;// some timing results
 	
 	FLT *x, *y, *z;
 	CPX *c, *F;  	
