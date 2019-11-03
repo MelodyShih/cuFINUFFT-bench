@@ -71,3 +71,7 @@ make PREC=SINGLE lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/finufft/lib:~/CUNFFT/lib:~/cuFINUFFT/lib
 ```
 - [Step 3] Execute python scripts
+```
+python spreadtime.py
+python plot_spreadtime.py
+```
