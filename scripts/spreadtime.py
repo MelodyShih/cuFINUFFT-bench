@@ -1,4 +1,5 @@
 import subprocess
+import datetime
 import numpy as np
 import re
 
@@ -11,6 +12,8 @@ def find_between( s, first, last ):
         return ""
 
 def main(OUTPUT):
+	d = datetime.datetime.today()
+	date = d.strftime('%m%d')
 	nupts_distr=1
 	dim=2
 	reps=5
@@ -63,9 +66,9 @@ def main(OUTPUT):
 				print("cufinufft ", cufinufft_tnow)
 				print("cunfft ", cunfft_tnow)
 	if OUTPUT is True:
-		np.save('../results/finufft_spread_1102.npy', finufft_spread)
-		np.save('../results/cufinufft_spread_1102.npy', cufinufft_spread)
-		np.save('../results/cunfft_spread_1102.npy', cunfft_spread)
+		np.save('../results/finufft_spread_'+date+'.npy', finufft_spread)
+		np.save('../results/cufinufft_spread_'+data+'.npy', cufinufft_spread)
+		np.save('../results/cunfft_spread_'+data+'.npy', cunfft_spread)
 
 if __name__== "__main__":
   main(OUTPUT=False)

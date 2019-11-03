@@ -13,7 +13,7 @@ def main():
 	t_finufft   = np.load(result_dir+'finufft_spread_'+date+'.npy')
 	t_cunfft    = np.load(result_dir+'cunfft_spread_'+date+'.npy')
 
-	npzfile = np.load(result_dir+'param_1102.npz')
+	npzfile = np.load(result_dir+'param_'+date+'.npz')
 	dim = 2
 	density_list = npzfile['density']
 	tol_list     = npzfile['tol']
