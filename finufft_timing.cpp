@@ -39,18 +39,18 @@ int main(int argc, char *argv[]){
 	nufft_opts opts; 
 	finufft_default_opts(&opts);
 	opts.debug = 2;// some timing results
-	
+
 	FLT *x, *y, *z;
 	CPX *c, *F;  	
-	
+
 	x = (FLT *)malloc(sizeof(FLT)*M);
 	if(dim>1)
-  		y = (FLT *)malloc(sizeof(FLT)*M);
+		y = (FLT *)malloc(sizeof(FLT)*M);
 	if(dim>2)
-  		z = (FLT *)malloc(sizeof(FLT)*M);
+		z = (FLT *)malloc(sizeof(FLT)*M);
 
-  	c = (CPX*)malloc(sizeof(CPX)*M);
- 	F = (CPX*)malloc(sizeof(CPX)*N);
+	c = (CPX*)malloc(sizeof(CPX)*M);
+	F = (CPX*)malloc(sizeof(CPX)*N);
 
 	create_data_type1(nupts_distr, dim, M, x, y, z, 1, 1, 1, c, M_PI);
 	CNTime timer; timer.start();
@@ -70,30 +70,30 @@ int main(int argc, char *argv[]){
 	double ti=timer.elapsedsec();
 	printf("[time  ] Total time = %.3g s\n", ti);
 
-/*
-	double n_x = round(0.45*N1); //check the answer for this arbitrary mode
-	double n_y = round(-0.35*N2);
+	/*
+	   double n_x = round(0.45*N1); //check the answer for this arbitrary mode
+	   double n_y = round(-0.35*N2);
 
-	complex<double> Ftest(0,0);
-	for(int j = 0; j < M; j++){
-		Ftest += c[j]*exp(I*(n_x*x[j]+n_y*y[j]));
-	}
+	   complex<double> Ftest(0,0);
+	   for(int j = 0; j < M; j++){
+	   Ftest += c[j]*exp(I*(n_x*x[j]+n_y*y[j]));
+	   }
 
-	//indicies in output array for this frequency pair?
-	int n_out_x = n_x + (int)N1/2; 
-	int n_out_y = n_y + (int)N2/2;
-	int indexOut = n_out_x + n_out_y*(N1);  
+		//indicies in output array for this frequency pair?
+		int n_out_x = n_x + (int)N1/2; 
+		int n_out_y = n_y + (int)N2/2;
+		int indexOut = n_out_x + n_out_y*(N1);  
 
-	//compute inf norm of F 
-	double Fmax = 0.0;
-	for (int m=0; m<N1*N2; m++) {
+		//compute inf norm of F 
+		double Fmax = 0.0;
+		for (int m=0; m<N1*N2; m++) {
 		double aF = abs(F[m]);
 		if (aF>Fmax) Fmax=aF;
-	}
+		}
 
-	//compute relative error
-	double err = abs(F[indexOut] - Ftest)/Fmax; 
-*/
+		//compute relative error
+		double err = abs(F[indexOut] - Ftest)/Fmax; 
+	*/
 	return ier;
 
 }

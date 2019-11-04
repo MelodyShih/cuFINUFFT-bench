@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 	sscanf(argv[3],"%lf",&w); N1 = (int)w;  // so can read 1e6 right!
 	sscanf(argv[4],"%lf",&w); N2 = (int)w;
 	sscanf(argv[5],"%lf",&w); N3 = (int)w;
-	
+
 	M = 8*N1*N2*N3;// let density always be 1
 	if(argc>6){
 		sscanf(argv[6],"%lf",&w); M  = (int)w;
@@ -40,11 +40,11 @@ int main(int argc, char* argv[])
 	int ntransfcufftplan = 1;
 	int iflag=1;
 
-    cudaEvent_t start, stop;
-    float milliseconds = 0;
-    float totaltime = 0;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
+	cudaEvent_t start, stop;
+	float milliseconds = 0;
+	float totaltime = 0;
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
 
 	FLT *x, *y, *z;
 	CUCPX *c, *fk;
@@ -78,52 +78,52 @@ int main(int argc, char* argv[])
 	nmodes[0] = N1;
 	nmodes[1] = N2;
 	nmodes[2] = N3;
-	
+
 	int ns = std::ceil(-log10(tol/10.0));//spread width
 	printf("[info  ] (N1,N2,N3)=(%d,%d,%d), M=%d, tol=%3.1e, spreadwidth=%d\n", 
-		N1,N2,N3,M,tol,ns);
+			N1,N2,N3,M,tol,ns);
 
 	CNTime timer; timer.start();
 	cudaEventRecord(start);
-    {
+	{
 		ier=cufinufft_makeplan(type1, dim, nmodes, iflag, ntransf, tol, 
-			ntransfcufftplan, &dplan);
+				ntransfcufftplan, &dplan);
 	}
 	cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    totaltime += milliseconds;
-    printf("[time  ] cufinufft plan:\t\t %.3g s\n", milliseconds/1000);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	totaltime += milliseconds;
+	printf("[time  ] cufinufft plan:\t\t %.3g s\n", milliseconds/1000);
 
 	cudaEventRecord(start);
-    {
+	{
 		ier=cufinufft_setNUpts(M, d_x, d_y, d_z, 0, NULL, NULL, NULL, &dplan);
 	}
 	cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    totaltime += milliseconds;
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	totaltime += milliseconds;
 	printf("[time  ] cufinufft setNUpts:\t\t %.3g s\n", milliseconds/1000);
 
 	cudaEventRecord(start);
-    {
+	{
 		ier=cufinufft_exec(d_c, d_fk, &dplan);
 	}
 	cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    totaltime += milliseconds;
-    printf("[time  ] cufinufft exec:\t\t %.3g s\n", milliseconds/1000);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	totaltime += milliseconds;
+	printf("[time  ] cufinufft exec:\t\t %.3g s\n", milliseconds/1000);
 
 	cudaEventRecord(start);
-    {
+	{
 		ier=cufinufft_destroy(&dplan);
 	}
 	cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    totaltime += milliseconds;
-    printf("[time  ] cufinufft destroy:\t\t %.3g s\n", milliseconds/1000);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	totaltime += milliseconds;
+	printf("[time  ] cufinufft destroy:\t\t %.3g s\n", milliseconds/1000);
 
 	cudaMemcpy(fk,d_fk,N1*N2*N3*ntransf*sizeof(CUCPX),cudaMemcpyDeviceToHost);
 	double ti=timer.elapsedsec();
