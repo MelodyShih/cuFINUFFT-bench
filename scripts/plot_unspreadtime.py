@@ -10,15 +10,15 @@ def main():
 	nuptstype = 1
 
 	result_dir="../results/"
-	t_cufinufft = np.load(result_dir+'workergpu09_cufinufft_spread_3d_t'+\
+	t_cufinufft = np.load(result_dir+'workergpu09_cufinufft_unspread_3d_t'+\
 		str(nuptstype)+'_'+date+'.npy')
-	t_cufinufft_2 = np.load(result_dir+'workergpu18_cufinufft_spread_3d_t'+\
-		str(nuptstype)+'_['+str(tol)+']_'+'maxsubprob1024_'+date+'.npy')
-	t_cufinufft_3 = np.load(result_dir+'workergpu36_cufinufft_spread_3d_t'+\
-		str(nuptstype)+'_['+str(tol)+']_'+'maxsubprob1024_nupts'+date+'.npy')
-	t_finufft   = np.load(result_dir+'worker1039_finufft_spread_3d_t'+\
+	#t_cufinufft_2 = np.load(result_dir+'workergpu18_cufinufft_spread_3d_t'+\
+	#	str(nuptstype)+'_['+str(tol)+']_'+'maxsubprob1024_'+date+'.npy')
+	#t_cufinufft_3 = np.load(result_dir+'workergpu36_cufinufft_spread_3d_t'+\
+	#	str(nuptstype)+'_['+str(tol)+']_'+'maxsubprob1024_nupts'+date+'.npy')
+	t_finufft   = np.load(result_dir+'worker1113_finufft_unspread_3d_t'+\
 		str(nuptstype)+'_'+date+'.npy')
-	t_cunfft    = np.load(result_dir+'workergpu09_cunfft_spread_3d_t'+\
+	t_cunfft    = np.load(result_dir+'workergpu09_cunfft_unspread_3d_t'+\
 		str(nuptstype)+'_'+date+'.npy')
 
 	npzfile = np.load(result_dir+'param_unspread_'+date+'.npz')
@@ -46,15 +46,7 @@ def main():
 			ax[0].bar(x, M/t_finufft[d,t,:],w, color="red",label='FINUFFT (28 threads)')
 			ax[0].bar(x+w, M/t_cunfft[d,t,:],w, color="orange",label='cuNFFT')
 			ax[0].bar(x+2*w, M/t_cufinufft[d,t,:],w, color="green",\
-				label='cuFINUFFT, maxsubprob=32768')
-			if nuptstype == 2:
-				ax[0].bar(x+3*w, M/t_cufinufft_2[d,t,:],w, color="blue",\
-					label='cuFINUFFT, maxsubprob=1024')
-				ax[0].bar(x+4*w, M/t_cufinufft_3[d,t,:],w, color="purple",\
-					label='cuFINUFFT, nuptsdriven')
-			else:
-				ax[0].bar(x+3*w, M/t_cufinufft_3[d,t,:],w, color="purple",\
-					label='cuFINUFFT, nuptsdriven')
+				label='cuFINUFFT')
 			formatter = ticker.ScalarFormatter()
 			formatter.set_scientific(True)
 			formatter.set_powerlimits((-1,1))
@@ -71,15 +63,7 @@ def main():
 			ax[1].set_title('Speed up (s/s_FINUFFT)')
 			ax[1].plot(x, t_finufft[d,t,:]/t_cunfft[d,t,:],'-o',color='orange',label='cuNFFT')
 			ax[1].plot(x, t_finufft[d,t,:]/t_cufinufft[d,t,:],'-o',color='green',\
-				label='cuFINUFFT, maxsubprob=32768')
-			if nuptstype == 2:
-				ax[1].plot(x, t_finufft[d,t,:]/t_cufinufft_2[d,t,:],'-o',color='blue',\
-					label='cuFINUFFT, maxsubprob=1024')
-				ax[1].plot(x, t_finufft[d,t,:]/t_cufinufft_3[d,t,:],'-o',color='purple',\
-					label='cuFINUFFT, nuptsdriven')
-			else:
-				ax[1].plot(x, t_finufft[d,t,:]/t_cufinufft_3[d,t,:],'-o',color='purple',\
-					label='cuFINUFFT, nuptsdriven')
+				label='cuFINUFFT')
 				
 			ax[1].set_xticks(x)
 			ax[1].set_xticklabels(N1_list)
@@ -92,7 +76,7 @@ def main():
 				fig.suptitle('Uniform distributed pts ('+str(dim)+'D), Single Precision, tol='+str(tol)+'(ns ='+str(-np.log10(tol)+1)+'), density='+str(density), fontsize=15)
 			if nuptstype == 2:
 				fig.suptitle('Sphere quad pts ('+str(dim)+'D), Single Precision, tol='+str(tol)+'(ns ='+str(-np.log10(tol)+1)+'), density='+str(density), fontsize=15)
-			#fig.savefig('../plots/3d/density'+format(density, ".2e")+'_3d_t'+str(nuptstype)+'_+tol_'+str(tol)+'_'+date+'.png')
+			fig.savefig('../plots/3d/unspread/density'+format(density, ".2e")+'_3d_t'+str(nuptstype)+'_tol'+str(tol)+'_'+date+'.png')
 	plt.show()
 if __name__== "__main__":
 	main()

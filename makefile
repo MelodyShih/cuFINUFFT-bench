@@ -14,7 +14,7 @@ EIGEN=/mnt/home/yshih/eigen-eigen-323c052e1731
 %.o: %.cpp
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
-cunfft: cunfft_timing.cpp utils.o
+cunfft_type1: cunfft_timing_type1.cpp utils.o
 	$(CXX) $^ -DGPU\
 		-I$(EIGEN)/\
 		-I$(CUNFFT)/src/\
@@ -22,7 +22,7 @@ cunfft: cunfft_timing.cpp utils.o
 		-lcunfft -lcudart\
 		-o $@
 
-cufinufft: cufinufft_timing.cpp
+cufinufft_type1: cufinufft_timing_type1.cpp
 	$(NVCC) $^ -DGPU -DSINGLE $(NVCCFLAGS) \
 		-I$(EIGEN)/\
 		-I$(CUFINUFFT)/src/\
@@ -30,7 +30,7 @@ cufinufft: cufinufft_timing.cpp
 		-lcudart -lcufinufftf\
 		-o $@
 
-finufft: finufft_timing.cpp
+finufft_type1: finufft_timing_type1.cpp
 	$(CXX) $^ -DSINGLE -fopenmp\
 		-I$(EIGEN)/\
 		-I$(FINUFFT)/src \
@@ -38,8 +38,35 @@ finufft: finufft_timing.cpp
 		-lfinufftf -lfftw3f -lfftw3f_omp\
 		-o $@
 
-all: cunfft cufinufft finufft
+cunfft_type2: cunfft_timing_type2.cpp utils.o
+	$(CXX) $^ -DGPU\
+		-I$(EIGEN)/\
+		-I$(CUNFFT)/src/\
+		-L$(CUNFFT)/lib/\
+		-lcunfft -lcudart\
+		-o $@
+
+cufinufft_type2: cufinufft_timing_type2.cpp
+	$(NVCC) $^ -DGPU -DSINGLE $(NVCCFLAGS) \
+		-I$(EIGEN)/\
+		-I$(CUFINUFFT)/src/\
+		-L$(CUFINUFFT)/lib\
+		-lcudart -lcufinufftf\
+		-o $@
+
+finufft_type2: finufft_timing_type2.cpp
+	$(CXX) $^ -DSINGLE -fopenmp\
+		-I$(EIGEN)/\
+		-I$(FINUFFT)/src \
+		-L$(FINUFFT)/lib\
+		-lfinufftf -lfftw3f -lfftw3f_omp\
+		-o $@
+
+all: cunfft_type1 cufinufft_type1 finufft_type1 cunfft_type2 cufinufft_type2 finufft_type2
 clean: 
-	rm cunfft 
-	rm cufinufft
-	rm finufft
+	rm cunfft_type1 
+	rm cufinufft_type1
+	rm finufft_type1
+	rm cunfft_type2 
+	rm cufinufft_type2
+	rm finufft_type2

@@ -28,13 +28,11 @@ def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 
 	nupts_distr = 1
 
-	finufft_filename=(resultdir+hostname+'_finufft_spread_3d_t'+str(nupts_distr)+\
+	finufft_filename=(resultdir+hostname+'_finufft_unspread_3d_t'+str(nupts_distr)+\
 		'_'+date)
-	cufinufft_m1_filename=(resultdir+hostname+'_cufinufft_spread_3d_t'+str(nupts_distr)+\
+	cufinufft_filename=(resultdir+hostname+'_cufinufft_unspread_3d_t'+str(nupts_distr)+\
 		'_'+date)
-	cufinufft_m2_filename=(resultdir+hostname+'_cufinufft_spread_3d_t'+str(nupts_distr)+\
-		'_'+date)
-	cunfft_filename=(resultdir+hostname+'_cunfft_spread_3d_t'+str(nupts_distr)+'_'\
+	cunfft_filename=(resultdir+hostname+'_cunfft_unspread_3d_t'+str(nupts_distr)+'_'\
 		+date)
 
 	dim=3
@@ -43,13 +41,12 @@ def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 	density_totry = [0.1, 1] #0.1, 1, 10
 	N1_totry      = [16, 32, 64, 128, 256] #128, ... ,4096 
 	if OUTPUT is True:
-		np.savez(resultdir+'param_spread'+'_'+date, density=density_totry, tol=tol_totry, 
-			n1=N1_totry)
+		np.savez(resultdir+'param_unspread'+'_'+date, density=density_totry, 
+			tol=tol_totry, n1=N1_totry)
 
 	finufft_spread   = np.zeros([len(density_totry), len(tol_totry), len(N1_totry)])
 	if has_gpu is True:
-		cufinufft_m1_spread = np.zeros([len(density_totry), len(tol_totry), len(N1_totry)])
-		cufinufft_m2_spread = np.zeros([len(density_totry), len(tol_totry), len(N1_totry)])
+		cufinufft_spread = np.zeros([len(density_totry), len(tol_totry), len(N1_totry)])
 		cunfft_spread    = np.zeros([len(density_totry), len(tol_totry), len(N1_totry)])
 
 	for t,tol in enumerate(tol_totry):
@@ -59,8 +56,7 @@ def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 		for d,density in enumerate(density_totry):
 			for n,N1 in enumerate(N1_totry):
 				finufft_tnow = float('Inf')
-				cufinufft_m1_tnow = float('Inf')
-				cufinufft_m2_tnow = float('Inf')
+				cufinufft_tnow = float('Inf')
 				cunfft_tnow = float('Inf')
 				N2=1
 				N3=1
@@ -73,55 +69,39 @@ def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 				for nn in range(reps):
 					tt = 0.0
 					if has_gpu is not True:
-						finufft_output=subprocess.check_output(["./finufft_type1",\
+						finufft_output=subprocess.check_output(["./finufft_type2",\
 							str(nupts_distr),str(dim),str(N1),str(N2),str(N3),\
 							str(M),str(tol)], cwd="../").decode("utf-8")
 						finufft_t = float(find_between(finufft_output, \
-							"spread (ier=0):", "s"))
+							"unspread (ier=0):", "s"))
 						finufft_tnow = min(finufft_tnow,finufft_t)
 
 					if has_gpu is True:
 						try:
-							cufinufft_m1_output=subprocess.check_output(["./cufinufft_type1",\
+							cufinufft_output=subprocess.check_output(["./cufinufft_type2",\
 								str(nupts_distr),str(dim),str(N1),str(N2),str(N3),\
-								str(M),str(tol),str(1)], cwd="../").decode("utf-8")
+								str(M),str(tol)], cwd="../").decode("utf-8")
 						except subprocess.CalledProcessError as e:
-							cufinufft_m1_output=None
+							cufinufft_output=None
 						try:
-							cufinufft_m2_output=subprocess.check_output(["./cufinufft_type1",\
-								str(nupts_distr),str(dim),str(N1),str(N2),str(N3),\
-								str(M),str(tol),str(2)], cwd="../").decode("utf-8")
-						except subprocess.CalledProcessError as e:
-							cufinufft_m2_output=None
-						try:
-							cunfft_output=subprocess.check_output(["./cunfft_type1",\
+							cunfft_output=subprocess.check_output(["./cunfft_type2",\
 								str(nupts_distr),str(dim),str(N1),str(N2),str(N3),\
 								str(M),str(tol)], cwd="../").decode("utf-8")
 						except subprocess.CalledProcessError as e:
 							cunfft_output=None
-						if cufinufft_m1_output is not None:
-							cufinufft_m1_t = float(find_between(cufinufft_m1_output, \
-								"Spread (1)", "s")) + \
+						if cufinufft_output is not None:
+							cufinufft_t = float(find_between(cufinufft_output, \
+								"Unspread (1)", "s")) + \
 								float(find_between(cufinufft_output, \
                             	"Setup Subprob properties", "s"))
-							cufinufft_m1_tnow = min(cufinufft_m1_tnow,cufinufft_m1_t)
+							cufinufft_tnow = min(cufinufft_tnow,cufinufft_t)
 						else:
-							cufinufft_m1_t = float('Inf')
-							cufinufft_m1_tnow = min(cufinufft_m1_tnow,cufinufft_m1_t)
-							break
-						if cufinufft_m2_output is not None:
-							cufinufft_m2_t = float(find_between(cufinufft_m2_output, \
-								"Spread (2)", "s")) + \
-								float(find_between(cufinufft_output, \
-                            	"Setup Subprob properties", "s"))
-							cufinufft_m2_tnow = min(cufinufft_m2_tnow,cufinufft_m1_t)
-						else:
-							cufinufft_m2_t = float('Inf')
-							cufinufft_m2_tnow = min(cufinufft_m2_tnow,cufinufft_m2_t)
+							cufinufft_t = float('Inf')
+							cufinufft_tnow = min(cufinufft_tnow,cufinufft_t)
 							break
 						if cunfft_output is not None:
 							cunfft_t = float(find_between(cunfft_output, \
-								"Spread:", "s"))
+								"Unspread:", "s"))
 						else:
 							cunfft_t = float('Inf')
 						cunfft_tnow = min(cunfft_tnow,cunfft_t)
@@ -129,13 +109,11 @@ def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 				if has_gpu is not True:
 					finufft_spread[d,t,n]   = finufft_tnow
 				if has_gpu is True:
-					cufinufft_m1_spread[d,t,n] = cufinufft_m1_tnow
-					cufinufft_m2_spread[d,t,n] = cufinufft_m2_tnow
+					cufinufft_spread[d,t,n] = cufinufft_tnow
 					cunfft_spread[d,t,n]   = cunfft_tnow
 	if OUTPUT is True:
 		if has_gpu is True:
-			np.save(cufinufft_m1_filename+'.npy', cufinufft_m1_spread)
-			np.save(cufinufft_m2_filename+'.npy', cufinufft_m2_spread)
+			np.save(cufinufft_filename+'.npy', cufinufft_spread)
 			np.save(cunfft_filename+'.npy', cunfft_spread)
 		else:
 			np.save(finufft_filename+'.npy', finufft_spread)
