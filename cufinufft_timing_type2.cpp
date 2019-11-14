@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
 	int ier;
 	int N1, N2, N3, M, N;
 	if (argc<4) {
-		fprintf(stderr,"Usage: cufinufft [nupts_distr [dim [N1 N2 N3 [M [tol]]]]\n");
+		fprintf(stderr,"Usage: cufinufft_type2 [nupts_distr [dim [N1 N2 N3 [M [tol]]]]\n");
 		return 1;
 	}  
 	double w;
@@ -40,6 +40,11 @@ int main(int argc, char* argv[])
 	int ntransfcufftplan = 1;
 	int iflag=1;
 
+	int nmodes[3];
+	nmodes[0] = N1;
+	nmodes[1] = N2;
+	nmodes[2] = N3;
+
 	cudaEvent_t start, stop;
 	float milliseconds = 0;
 	float totaltime = 0;
@@ -62,22 +67,17 @@ int main(int argc, char* argv[])
 	cudaMalloc(&d_c,M*ntransf*sizeof(CUCPX));
 	cudaMalloc(&d_fk,N1*N2*N3*ntransf*sizeof(CUCPX));
 
-	create_data_type1(nupts_distr, dim, M, x, y, z, 1, 1, 1, c, M_PI);
+	create_data_type2(nupts_distr, dim, M, x, y, z, 1, 1, 1, nmodes, fk, M_PI);
 
 	cudaMemcpy(d_x,x,M*sizeof(FLT),cudaMemcpyHostToDevice);
 	cudaMemcpy(d_y,y,M*sizeof(FLT),cudaMemcpyHostToDevice);
 	cudaMemcpy(d_z,z,M*sizeof(FLT),cudaMemcpyHostToDevice);
-	cudaMemcpy(d_c,c,M*ntransf*sizeof(CUCPX),cudaMemcpyHostToDevice);
+	cudaMemcpy(d_fk,fk,N1*N2*N3*ntransf*sizeof(CUCPX),cudaMemcpyHostToDevice);
 
 	cufinufft_plan dplan;
 
-	int nmodes[3];
-
-	ier=cufinufft_default_opts(type1, dim, dplan.opts);
-
-	nmodes[0] = N1;
-	nmodes[1] = N2;
-	nmodes[2] = N3;
+	ier=cufinufft_default_opts(type2, dim, dplan.opts);
+	dplan.opts.gpu_method=1;
 
 	int ns = std::ceil(-log10(tol/10.0));//spread width
 	printf("[info  ] (N1,N2,N3)=(%d,%d,%d), M=%d, tol=%3.1e, spreadwidth=%d\n", 
@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
 	CNTime timer; timer.start();
 	cudaEventRecord(start);
 	{
-		ier=cufinufft_makeplan(type1, dim, nmodes, iflag, ntransf, tol, 
+		ier=cufinufft_makeplan(type2, dim, nmodes, iflag, ntransf, tol, 
 				ntransfcufftplan, &dplan);
 	}
 	cudaEventRecord(stop);
@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
 	totaltime += milliseconds;
 	printf("[time  ] cufinufft destroy:\t\t %.3g s\n", milliseconds/1000);
 
-	cudaMemcpy(fk,d_fk,N1*N2*N3*ntransf*sizeof(CUCPX),cudaMemcpyDeviceToHost);
+	cudaMemcpy(c,d_c,M*ntransf*sizeof(CUCPX),cudaMemcpyDeviceToHost);
 	double ti=timer.elapsedsec();
 	printf("[time  ] Total time = %.3g s\n", ti);
 

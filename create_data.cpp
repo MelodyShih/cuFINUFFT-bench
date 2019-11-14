@@ -63,8 +63,8 @@ void gauss(int N, double *x){
 	}
 }
 
-void create_data_type1(int nupts_distr, int dim, int M, FLT* x, FLT* y, FLT* z, 
-		int ix, int iy, int iz, CUCPX* c, FLT scale)
+void create_nupts(int nupts_distr, int dim, int M, FLT*x, FLT*y, FLT*z, int ix, 
+		int iy, int iz, FLT scale)
 {
 	int i,j;
 	switch(nupts_distr){
@@ -159,7 +159,12 @@ void create_data_type1(int nupts_distr, int dim, int M, FLT* x, FLT* y, FLT* z,
 		default:
 			fprintf(stderr,"Invalid distribution of nonuniform points\n");
 	}	
-	for (i = 0; i < M; i++) {
+}
+void create_data_type1(int nupts_distr, int dim, int M, FLT* x, FLT* y, FLT* z, 
+		int ix, int iy, int iz, CUCPX* c, FLT scale)
+{
+	create_nupts(nupts_distr, dim, M, x, y, z, ix, iy, iz, scale);
+	for (int i = 0; i < M; i++) {
 #ifdef GPU
 		c[i].x = randm11();
 		c[i].y = randm11();
@@ -169,39 +174,16 @@ void create_data_type1(int nupts_distr, int dim, int M, FLT* x, FLT* y, FLT* z,
 	}
 }
 
-#if 0
-	void create_data_type2(int nupts_distr, cunfft_plan *plan, int dim, int N1, int N2, 
-			int N3)
-	{
-		switch(nupts_distr){
-			case 1:
-				{
-					for (int i = 0; i < plan->M_total; i++) {
-						plan->x[dim*i] = 0.5*randm11(); // x in [-pi,pi)
-						if(dim > 1)
-							plan->x[dim*i+1] = 0.5*randm11();
-						if(dim > 2)
-							plan->x[dim*i+2] = 0.5*randm11();
-					}
-				}
-				break;
-			case 2:
-				{
-					for (int i = 0; i < plan->M_total; i++) {
-						plan->x[dim*i] = 0.5*rand01()/(N1*2*2/32); // x in [-pi,pi)
-						if(dim > 1)
-							plan->x[dim*i+1] = 0.5*rand01()/(N2*2*2/32);
-						if(dim > 2)
-							plan->x[dim*i+2] = 0.5*rand01()/(N3*2*2/32);
-					}
-				}
-				break;
-			default:
-				cerr<<"Invalid distribution of nonuniform points"<<endl;
-		}
-		for(int i=0; i<plan->n_total; i++){
-			plan->g[i].x = randm11();
-			plan->g[i].y = randm11();
-		}
-	}
+void create_data_type2(int nupts_distr, int dim, int M, FLT* x, FLT* y, FLT* z, 
+		int ix, int iy, int iz, int* Nmodes, CUCPX* f, FLT scale)
+{
+	create_nupts(nupts_distr, dim, M, x, y, z, ix, iy, iz, scale);
+	for (int i = 0; i < Nmodes[0]*Nmodes[1]*Nmodes[2]; i++) {
+#ifdef GPU
+		f[i].x = randm11();
+		f[i].y = randm11();
+#else
+		f[i] = crandm11();
 #endif
+	}
+}
