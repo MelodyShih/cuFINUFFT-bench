@@ -8,9 +8,11 @@
 
 #include "create_data.cpp"
 
+using namespace std;
+
 int main(int argc, char *argv[]){
 	int ier;
-	int N1, N2, N3, M, N[3];
+	int N1, N2, N3, M, N;
 	if (argc<4) {
 		fprintf(stderr,"Usage: finufft [nupts_distr [dim [N1 N2 N3 [M [tol]]]]\n");
 		return 1;
@@ -23,17 +25,15 @@ int main(int argc, char *argv[]){
 	sscanf(argv[3],"%lf",&w); N1 = (int)w;  // so can read 1e6 right!
 	sscanf(argv[4],"%lf",&w); N2 = (int)w;
 	sscanf(argv[5],"%lf",&w); N3 = (int)w;
-	N[0] = N1;
-	N[1] = N2;
-	N[2] = N3;
+	N = N1*N2*N3;
 	M = 8*N1*N2*N3;// let density always be 1
 	if(argc>6){
 		sscanf(argv[6],"%lf",&w); M  = (int)w;
 	}
 
-	FLT tol=1e-6;// desired accuracy
+	float tol=1e-6;// desired accuracy
 	if(argc>7){
-		sscanf(argv[7],"%lf",&w); tol  = (FLT)w;
+		sscanf(argv[7],"%lf",&w); tol  = (float)w;
 	}
 
 	printf("[info  ] (N1,N2,N3)=(%d,%d,%d), M=%d, tol=%3.1e\n", N1,N2,N3,M,tol);
@@ -42,36 +42,53 @@ int main(int argc, char *argv[]){
 	finufft_default_opts(&opts);
 	opts.debug = 2;// some timing results
 
-	FLT *x, *y, *z;
-	CPX *c, *F;  	
+	float *x, *y, *z;
+	complex<float> *c, *F;  	
 
-	x = (FLT *)malloc(sizeof(FLT)*M);
+	x = (float *)malloc(sizeof(float)*M);
 	if(dim>1)
-		y = (FLT *)malloc(sizeof(FLT)*M);
+		y = (float *)malloc(sizeof(float)*M);
 	if(dim>2)
-		z = (FLT *)malloc(sizeof(FLT)*M);
+		z = (float *)malloc(sizeof(float)*M);
 
-	c = (CPX*)malloc(sizeof(CPX)*M);
-	F = (CPX*)malloc(sizeof(CPX)*N[0]*N[1]*N[2]);
+	c = (complex<float>*)malloc(sizeof(complex<float>)*M);
+	F = (complex<float>*)malloc(sizeof(complex<float>)*N);
 
-	create_data_type2(nupts_distr, dim, M, x, y, z, 1, 1, 1, N, F, M_PI);
+	int n[3];
+	n[0] = N1;
+	n[1] = N2;
+	n[2] = N3;
+	create_data_type2(nupts_distr, dim, M, x, y, z, 1, 1, 1, n, F, M_PI, N1, N2, N3);
+
+
+	int64_t nmodes[3];
+	nmodes[0] = N1;
+	nmodes[1] = N2;
+	nmodes[2] = N3;
+	int type=2,ntrans=1;
+	double totaltime=0;
 	CNTime timer; timer.start();
-	switch(dim){
-		case 1:
-			ier = finufft1d2(M,&x[0],&c[0],1,tol,N1,&F[0],opts);
-			break;
-		case 2:
-			ier = finufft2d2(M,&x[0],&y[0],&c[0],1,tol,N1,N2,&F[0],opts);
-			break;
-		case 3:
-			ier = finufft3d2(M,&x[0],&y[0],&z[0],&c[0],1,tol,N1,N2,N3,&F[0],opts);
-			break;
-		default:
-			fprintf(stderr, "Invalid dimension\n");
-	}
+	finufftf_plan plan;
+	ier = finufftf_makeplan(type,dim,nmodes,+1,ntrans,tol,&plan,NULL);
 	double ti=timer.elapsedsec();
-	printf("[time  ] Total time = %.3g s\n", ti);
-
+	totaltime += ti;
+	printf("[time  ] finufft makeplan: \t%.3g s\n", ti);
+	timer.start();
+	finufftf_setpts(plan,M,x,y,z,0,NULL,NULL,NULL);
+	ti=timer.elapsedsec();
+	totaltime += ti;
+	printf("[time  ] finufft setpts: \t%.3g s\n", ti);
+	timer.start();
+	finufftf_execute(plan,c,F);
+	ti=timer.elapsedsec();
+	totaltime += ti;
+	printf("[time  ] finufft exec: \t\t%.3g s\n", ti);
+	timer.start();
+	finufftf_destroy(plan);
+	ti=timer.elapsedsec();
+	totaltime += ti;
+	printf("[time  ] finufft destroy: \t%.3g s\n", ti);
+	printf("[time  ] Totaltime: \t\t%.3g s\n", totaltime);
 	/*
 	   double n_x = round(0.45*N1); //check the answer for this arbitrary mode
 	   double n_y = round(-0.35*N2);

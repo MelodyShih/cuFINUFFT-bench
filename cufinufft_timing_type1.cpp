@@ -30,12 +30,12 @@ int main(int argc, char* argv[])
 		sscanf(argv[6],"%lf",&w); M  = (int)w;
 	}
 
-	FLT tol=1e-6;
+	float tol=1e-6;
 	if(argc>7){
-		sscanf(argv[7],"%lf",&w); tol  = (FLT)w;
+		sscanf(argv[7],"%lf",&w); tol  = (float)w;
 	}
 
-	int method;
+	int method=2;
 	if(argc>8){
 		sscanf(argv[8],"%d",&method);
 	}
@@ -43,58 +43,90 @@ int main(int argc, char* argv[])
 	cout<<scientific<<setprecision(3);
 
 	int ntransf = 1;
-	int ntransfcufftplan = 1;
+	int maxbatchsize = 1;
 	int iflag=1;
 
 	cudaEvent_t start, stop;
 	float milliseconds = 0;
 	float totaltime = 0;
+	float gpumemtime = 0;
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 
-	FLT *x, *y, *z;
-	CUCPX *c, *fk;
-	cudaMallocHost(&x, M*sizeof(FLT));
-	cudaMallocHost(&y, M*sizeof(FLT));
-	cudaMallocHost(&z, M*sizeof(FLT));
-	cudaMallocHost(&c, M*ntransf*sizeof(CPX));
-	cudaMallocHost(&fk,N1*N2*N3*ntransf*sizeof(CPX));
+	float *x, *y, *z;
+	cuFloatComplex *c, *fk;
+	cudaMallocHost(&x, M*sizeof(float));
+	if(dim > 1)
+		cudaMallocHost(&y, M*sizeof(float));
+	if(dim > 2)
+		cudaMallocHost(&z, M*sizeof(float));
+	cudaMallocHost(&c, M*ntransf*sizeof(cuFloatComplex));
+	cudaMallocHost(&fk,N1*N2*N3*ntransf*sizeof(cuFloatComplex));
 
-	FLT *d_x, *d_y, *d_z;
-	CUCPX *d_c, *d_fk;
-	cudaMalloc(&d_x,M*sizeof(FLT));
-	cudaMalloc(&d_y,M*sizeof(FLT));
-	cudaMalloc(&d_z,M*sizeof(FLT));
-	cudaMalloc(&d_c,M*ntransf*sizeof(CUCPX));
-	cudaMalloc(&d_fk,N1*N2*N3*ntransf*sizeof(CUCPX));
+	float *d_x, *d_y, *d_z;
+	cuFloatComplex *d_c, *d_fk;
+	cudaEventRecord(start);
+ 	{
+		cudaMalloc(&d_x,M*sizeof(float));
+		if(dim > 1)
+			cudaMalloc(&d_y,M*sizeof(float));
+		if(dim > 2)
+			cudaMalloc(&d_z,M*sizeof(float));
+		cudaMalloc(&d_c,M*ntransf*sizeof(cuFloatComplex));
+		cudaMalloc(&d_fk,N1*N2*N3*ntransf*sizeof(cuFloatComplex));
+	}
+	cudaEventRecord(stop);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	gpumemtime+=milliseconds;
 
-	create_data_type1(nupts_distr, dim, M, x, y, z, 1, 1, 1, c, M_PI);
+	create_data_type1(nupts_distr, dim, M, x, y, z, 1, 1, 1, c, M_PI, N1, N2, N3);
 
-	cudaMemcpy(d_x,x,M*sizeof(FLT),cudaMemcpyHostToDevice);
-	cudaMemcpy(d_y,y,M*sizeof(FLT),cudaMemcpyHostToDevice);
-	cudaMemcpy(d_z,z,M*sizeof(FLT),cudaMemcpyHostToDevice);
-	cudaMemcpy(d_c,c,M*ntransf*sizeof(CUCPX),cudaMemcpyHostToDevice);
+	cudaMemcpy(d_x,x,M*sizeof(float),cudaMemcpyHostToDevice);
+	if(dim > 1)
+		cudaMemcpy(d_y,y,M*sizeof(float),cudaMemcpyHostToDevice);
+	if(dim > 2)
+		cudaMemcpy(d_z,z,M*sizeof(float),cudaMemcpyHostToDevice);
+	cudaMemcpy(d_c,c,M*ntransf*sizeof(cuFloatComplex),cudaMemcpyHostToDevice);
 
-	cufinufft_plan dplan;
+	cufinufftf_plan dplan;
+	cufinufft_opts opts;
+	ier=cufinufft_default_opts(1, dim, &opts);
+	opts.gpu_method=method;
+	opts.gpu_kerevalmeth=1;
+	if(N1==2048){
+		opts.gpu_binsizex=64;
+		opts.gpu_binsizey=64;
+	}
+	if(dim==3){
+		opts.gpu_maxsubprobsize=1024;
+	}
 
 	int nmodes[3];
-
-	ier=cufinufft_default_opts(type1, dim, dplan.opts);
-	dplan.opts.gpu_method=method;
-
 	nmodes[0] = N1;
 	nmodes[1] = N2;
 	nmodes[2] = N3;
 
 	int ns = std::ceil(-log10(tol/10.0));//spread width
-	printf("[info  ] (N1,N2,N3)=(%d,%d,%d), M=%d, tol=%3.1e, spreadwidth=%d\n", 
-			N1,N2,N3,M,tol,ns);
 
+	cudaEventRecord(start);
+ 	{
+		cufftHandle fftplan;
+	        int nf2=1;
+        	int nf1=1;
+        	int n[] = {nf2, nf1};
+        	int inembed[] = {nf2, nf1};
+	    cufftPlan1d(&fftplan,nf1,CUFFT_TYPE,1);
+	}
+	cudaEventRecord(stop);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	printf("[time  ] dummy warmup call to CUFFT\t %.3g s\n", milliseconds/1000);
 	CNTime timer; timer.start();
 	cudaEventRecord(start);
 	{
-		ier=cufinufft_makeplan(type1, dim, nmodes, iflag, ntransf, tol, 
-				ntransfcufftplan, &dplan);
+		ier=cufinufftf_makeplan(1, dim, nmodes, iflag, ntransf, tol,
+			       maxbatchsize, &dplan, &opts);
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
@@ -104,17 +136,17 @@ int main(int argc, char* argv[])
 
 	cudaEventRecord(start);
 	{
-		ier=cufinufft_setNUpts(M, d_x, d_y, d_z, 0, NULL, NULL, NULL, &dplan);
+		ier=cufinufftf_setpts(M, d_x, d_y, d_z, 0, NULL, NULL, NULL, dplan);
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&milliseconds, start, stop);
 	totaltime += milliseconds;
-	printf("[time  ] cufinufft setNUpts:\t\t %.3g s\n", milliseconds/1000);
+	printf("[time  ] cufinufft setpts:\t\t %.3g s\n", milliseconds/1000);
 
 	cudaEventRecord(start);
 	{
-		ier=cufinufft_exec(d_c, d_fk, &dplan);
+		ier=cufinufftf_execute(d_c, d_fk, dplan);
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
@@ -124,7 +156,7 @@ int main(int argc, char* argv[])
 
 	cudaEventRecord(start);
 	{
-		ier=cufinufft_destroy(&dplan);
+		ier=cufinufftf_destroy(dplan);
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
@@ -132,9 +164,16 @@ int main(int argc, char* argv[])
 	totaltime += milliseconds;
 	printf("[time  ] cufinufft destroy:\t\t %.3g s\n", milliseconds/1000);
 
-	cudaMemcpy(fk,d_fk,N1*N2*N3*ntransf*sizeof(CUCPX),cudaMemcpyDeviceToHost);
-	double ti=timer.elapsedsec();
-	printf("[time  ] Total time = %.3g s\n", ti);
+	printf("[time  ] Totaltime: %.3g s\n", totaltime/1000);
+	cudaEventRecord(start);
+	{
+		cudaMemcpy(fk,d_fk,N1*N2*N3*ntransf*sizeof(cuFloatComplex),cudaMemcpyDeviceToHost);
+	}
+	cudaEventRecord(stop);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	gpumemtime+=milliseconds;
+	printf("[time  ] Totaltime(includememcpy): %.3g s\n", (totaltime+gpumemtime)/1000);
 
 	cudaFreeHost(x);
 	cudaFreeHost(y);

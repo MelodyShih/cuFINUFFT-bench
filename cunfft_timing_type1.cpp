@@ -42,8 +42,19 @@ int main(int argc, char** argv)
 		sscanf(argv[6],"%lf",&w); M  = (int)w;  // so can read 1e6 right!
 	}
 
+	float tol=1e-6;
+	if(argc>7){
+		sscanf(argv[7],"%lf",&w); tol  = (float)w;
+	}
+
+	int ns = std::ceil(-log10(tol/10.0));;
+	printf("ns = %d\n", ns);
+	if(2*CUT_OFF+2 != ns){
+		printf("2CUTOFF+2 is not equal to ns\n");
+		return 0;
+	}
+
 	simple_test_cunfft_2d_Ad(nupts_distr, dim, N1, N2, N3, M);
-	//simple_test_cunfft_2d(nupts_distr, N1, N2, M);
 
 	return EXIT_SUCCESS;
 
@@ -53,39 +64,36 @@ void simple_test_cunfft_2d_Ad(int nupts_distr,int dim, int N1, int N2, int N3,
 		int M)
 {
 	resetDevice();
-	printf("[info   ] (N1,N2,N3)=(%d,%d,%d), M=%d, spreadwidth=%d\n", 
-			N1,N2,N3,M,2*CUT_OFF+2);
 
 	uint_t N[3];
 	N[0]=N1;
 	N[1]=N2;
 	N[2]=N3;
 
-	CNTime timer; timer.start();
-	CNTime datatimer;
+	CNTime timer; 
+	timer.start();
 
 	cunfft_plan p;
 	cunfft_init(&p,dim,N,M);
 
 	/* create random data */
-	datatimer.start();
 	create_data_type1(nupts_distr, dim, M, &p.x[0], &p.x[1], &p.x[2], 
-			dim, dim, dim, &p.f[0], 0.5);
-	double td = datatimer.elapsedsec();
+			dim, dim, dim, &p.f[0], 0.5, N1, N2, N3);
 
+	GPUTimer t=getTimeGPU();
 	int numOfRuns=1;
-	cunfft_reinitAd(&p);
 	copyDataToDeviceAd(&p);
+	t=getTimeGPU();
 	cunfft_adjoint(&p);
+	double runTime = elapsedGPUTime(t,getTimeGPU());
 	copyDataToHostAd(&p);
-	double ti=timer.elapsedsec();
-	printf("[time   ] Spread: \t%.3g s\n", 
-			p.CUNFFTTimes.time_CONV/numOfRuns);
-	printf("[time   ] FFT: \t\t%.3g s\n", 
-			p.CUNFFTTimes.time_FFT/numOfRuns);
-	printf("[time   ] Deconvolve: \t%.3g s\n", 
-			p.CUNFFTTimes.time_ROC/numOfRuns);
-	printf("[time   ] Total time = %.3g s\n", ti-td);
+	p.CUNFFTTimes.runTime=runTime;
+
+	printf("[time   ] spread: \t%.3g s\n",     p.CUNFFTTimes.time_CONV/numOfRuns);
+	printf("[time   ] fft: \t\t%.3g s\n",      p.CUNFFTTimes.time_FFT/numOfRuns);
+	printf("[time   ] deconvolve: \t%.3g s\n", p.CUNFFTTimes.time_ROC/numOfRuns);
+	printf("[time   ] exec: \t%.3g s\n",      (p.CUNFFTTimes.time_ROC+p.CUNFFTTimes.time_FFT+p.CUNFFTTimes.time_CONV)/numOfRuns);
+	printf("[time   ] Totaltime: \t%.3g s\n", p.CUNFFTTimes.runTime);
 	/*
 	//CUNFFT adjoint
 	cunfft_reinitAd(&p);
@@ -100,37 +108,5 @@ void simple_test_cunfft_2d_Ad(int nupts_distr,int dim, int N1, int N2, int N3,
 	printf("[time  ] cnufft Copy memory DtoH\t %.3g ms\n", 1000*p.CUNFFTTimes.time_COPY_OUT);
 	//showCoeff_cuComplex(p.g,2*N1,"vector g (first few entries)");
 	*/
-	cunfft_finalize(&p);
-}
-
-void simple_test_cunfft_2d(int nupts_distr, int dim, int N1, int N2, int N3, 
-		int M)
-{
-	resetDevice();
-	uint_t N[3];
-	N[0]=N1;N[1]=N2;
-	cunfft_plan p;
-	int numOfRuns=1;
-	cunfft_init(&p,2,N,M);
-	//getExampleData_uniDistr(&p);
-	printf("[info  ] cut off = %d", CUT_OFF);
-
-#if 1	
-	copyDataToDevice_g(&p);
-	cudaVerify(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
-	double t=cuConvolution(&p);
-	p.CUNFFTTimes.time_CONV=t;
-	copyDataToHost(&p);
-	printf("\n[time  ] cnufft Copy memory HtoD\t %.3g ms\n", 1000*p.CUNFFTTimes.time_COPY_IN);
-	printf("[time  ] cnufft interp \t\t\t %.3g ms\n", 1000*p.CUNFFTTimes.time_CONV);
-	printf("[time  ] cnufft Copy memory DtoH\t %.3g ms\n", 1000*p.CUNFFTTimes.time_COPY_OUT);
-#else	
-	copyDataToDevice(&p);
-	cunfft_transform(&p);
-	copyDataToHost(&p);
-	//showCoeff_cuComplex(p.f,32,"vector f (first few entries)");
-	showTimes(&p.CUNFFTTimes,numOfRuns);
-#endif
-	//showCoeff_cuComplex(p.g,2*N1,"vector g (first few entries)");
 	cunfft_finalize(&p);
 }

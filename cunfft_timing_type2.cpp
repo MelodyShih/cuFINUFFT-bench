@@ -42,6 +42,17 @@ int main(int argc, char** argv)
 		sscanf(argv[6],"%lf",&w); M  = (int)w;  // so can read 1e6 right!
 	}
 
+	float tol=1e-6;
+	if(argc>7){
+		sscanf(argv[7],"%lf",&w); tol  = (float)w;
+	}
+
+	int ns = std::ceil(-log10(tol/10.0));;
+	printf("ns = %d\n", ns);
+	if(2*CUT_OFF+2 != ns){
+		printf("2CUTOFF+2 is not equal to ns\n");
+		return 0;
+	}
 	simple_test_cunfft_2d(nupts_distr, dim, N1, N2, N3, M);
 
 	return EXIT_SUCCESS;
@@ -73,36 +84,21 @@ void simple_test_cunfft_2d(int nupts_distr,int dim, int N1, int N2, int N3,
 
 	/* create random data */
 	datatimer.start();
-	create_data_type2(nupts_distr, dim, M, &p.x[0], &p.x[1], &p.x[2], 
-			dim, dim, dim, Nmodes, &p.g[0], 0.5);
-	double td = datatimer.elapsedsec();
+	create_data_type2(nupts_distr, dim, M, &p.x[0], &p.x[1], &p.x[2], dim, dim, 
+					  dim, Nmodes, &p.g[0], 0.5, N1, N2, N3);
 
 	int numOfRuns=1;
 	cunfft_reinitAd(&p);
 	copyDataToDeviceAd(&p);
+	GPUTimer t=getTimeGPU();
 	cunfft_transform(&p);
+	double runTime = elapsedGPUTime(t,getTimeGPU());
+	p.CUNFFTTimes.runTime=runTime;
 	copyDataToHostAd(&p);
-	double ti=timer.elapsedsec();
-	printf("[time   ] Unspread: \t%.3g s\n", 
-			p.CUNFFTTimes.time_CONV/numOfRuns);
-	printf("[time   ] FFT: \t\t%.3g s\n", 
-			p.CUNFFTTimes.time_FFT/numOfRuns);
-	printf("[time   ] Convolve: \t%.3g s\n", 
-			p.CUNFFTTimes.time_ROC/numOfRuns);
-	printf("[time   ] Total time = %.3g s\n", ti-td);
-	/*
-	//CUNFFT adjoint
-	cunfft_reinitAd(&p);
-	copyDataToDeviceAd(&p);
+	printf("[time   ] unspread: \t%.3g s\n", p.CUNFFTTimes.time_CONV/numOfRuns);
+	printf("[time   ] fft: \t\t%.3g s\n",    p.CUNFFTTimes.time_FFT/numOfRuns);
+	printf("[time   ] convolve: \t%.3g s\n", p.CUNFFTTimes.time_ROC/numOfRuns);
+	printf("[time   ] Totaltime: %.3g s\n", p.CUNFFTTimes.runTime/numOfRuns);
 
-	cudaVerify(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
-	double t=0.0;
-	t=cuConvolution_adjoint(&p);
-	copy_g_ToHost(&p);
-	printf("\n[time  ] cnufft Copy memory HtoD\t %.3g ms\n", 1000*p.CUNFFTTimes.time_COPY_IN);
-	printf("[time  ] cnufft spread \t\t\t %.3g ms\n", 1000*t);
-	printf("[time  ] cnufft Copy memory DtoH\t %.3g ms\n", 1000*p.CUNFFTTimes.time_COPY_OUT);
-	//showCoeff_cuComplex(p.g,2*N1,"vector g (first few entries)");
-	*/
 	cunfft_finalize(&p);
 }

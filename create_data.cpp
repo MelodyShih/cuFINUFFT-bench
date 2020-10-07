@@ -1,6 +1,11 @@
 #include <cuComplex.h>
 #include <Eigen/Dense>
 #include <iostream>
+#include <vector>       // std::vector
+#include <ctime>        // std::time
+#include <cstdlib> 
+
+#ifdef SINGLE
 
 #ifndef FLT
 typedef float FLT;
@@ -8,12 +13,32 @@ typedef float FLT;
 #ifndef IMA 
 #define IMA std::complex<FLT>(0.0,1.0) 
 #endif
+
 #ifndef CUCPX
 #ifdef GPU
 typedef cuFloatComplex CUCPX;
 #else
 typedef std::complex<float> CUCPX;
 #endif
+#endif
+
+#else
+
+#ifndef FLT
+typedef double FLT;
+#endif
+#ifndef IMA 
+#define IMA std::complex<double>(0.0,1.0) 
+#endif
+
+#ifndef CUCPX
+#ifdef GPU
+typedef cuDoubleComplex CUCPX;
+#else
+typedef std::complex<double> CUCPX;
+#endif
+#endif
+
 #endif
 
 #ifndef rand01
@@ -37,7 +62,7 @@ using namespace Eigen;
  * 	ix, iy, iz: the gap between ith and (i+1)th nonuniform pt data
  *
  */
-void gauss(int N, double *x){
+void gauss(int N, float *x){
 	MatrixXd T(N,N);
 	T.setZero();
 	VectorXd beta(N-1);
@@ -64,7 +89,7 @@ void gauss(int N, double *x){
 }
 
 void create_nupts(int nupts_distr, int dim, int M, FLT*x, FLT*y, FLT*z, int ix, 
-		int iy, int iz, FLT scale)
+		int iy, int iz, FLT scale, int N1, int N2, int N3)
 {
 	int i,j;
 	switch(nupts_distr){
@@ -81,9 +106,17 @@ void create_nupts(int nupts_distr, int dim, int M, FLT*x, FLT*y, FLT*z, int ix,
 			break;
 		case 2:
 			{
-				int m = int(pow(M, 1.0/dim));
+				std::srand ( unsigned ( std::time(0) ) );
+  				std::vector<int> vecshuff;
+
+  				// set some values:
+  				for (int i=0; i<M; ++i) vecshuff.push_back(i); // 1 2 3 4 5 6 7 8 9
+  				// using built-in random generator:
+  				//std::random_shuffle ( vecshuff.begin(), vecshuff.end() );
+				
+				int m = ceil(pow(M, 1.0/dim));
 				if(m%2==1) m=m+1;
-				double* mug = (double*) malloc(m*sizeof(double));
+				float* mug = (float*) malloc(m*sizeof(float));
 
 				for(i=0; i<m; i++){
 					mug[i] = cos(M_PI*((i+1)- 0.5)/m);
@@ -92,17 +125,17 @@ void create_nupts(int nupts_distr, int dim, int M, FLT*x, FLT*y, FLT*z, int ix,
 				if(dim == 1){
 					int n_set = 0;
 					for(i=0; i<m; i++){
-						if(i > M){
+						if(i >= M){
 							printf("warning: the nupts are trucated (%d)\n", m*m-n_set);
 							return;
 						}
-						x[i*ix] = scale*mug[i]; 
+						x[vecshuff[i]*ix] = scale*mug[i]; 
 						n_set++;
 					}
 				}
 
 				if(dim == 2){
-					double* pg  = (double*) malloc(m*sizeof(double));
+					float* pg  = (float*) malloc(m*sizeof(float));
 					for(i=0; i<m; i++){
 						pg[i]  = 2*M_PI*(i+1)/m;
 					}
@@ -110,28 +143,29 @@ void create_nupts(int nupts_distr, int dim, int M, FLT*x, FLT*y, FLT*z, int ix,
 					for(i=0; i<m; i++){
 						for(j=0; j<m; j++){
 							int idx = i*m+j;
-							if(idx > M){
+							if(idx >= M){
 								printf("warning: the nupts are trucated (%d)\n", m*m-n_set);
 								return;
 							}
-							x[idx*ix] = scale*mug[j]*cos(pg[i]);
-							y[idx*iy] = scale*mug[j]*sin(pg[i]);
+							x[vecshuff[idx]*ix] = scale*mug[j]*cos(pg[i]);
+							y[vecshuff[idx]*iy] = scale*mug[j]*sin(pg[i]);
+							printf("(%.5f, %5f)\n", x[vecshuff[idx]*ix], y[vecshuff[idx]*iy]);
 						}
 					}
 				}
 				if(dim == 3){
 					int mp = 2*m;
-					double* pg  = (double*) malloc(mp*sizeof(double));
+					float* pg  = (float*) malloc(mp*sizeof(float));
 					for(i=0; i<mp; i++){
 						pg[i]  = 2*M_PI*(i+1)/mp;
 					}
 					int mr = m/2; 
-					double* rg = (double*) malloc(mr*sizeof(double));
+					float* rg = (float*) malloc(mr*sizeof(float));
 					gauss(mr, rg);
 					for(i=0; i<mr; i++){
 						rg[i] = scale*(1+rg[i])/2.0;
 					}
-					double* sthg = (double*) malloc(m*sizeof(double));
+					float* sthg = (float*) malloc(m*sizeof(float));
 					for(i=0; i<m; i++){
 						sthg[i] = sqrt(1 - mug[i]*mug[i]);
 					}
@@ -140,18 +174,29 @@ void create_nupts(int nupts_distr, int dim, int M, FLT*x, FLT*y, FLT*z, int ix,
 						for(int i=0; i<mp; i++){
 							for(int j=0; j<m; j++){
 								int idx = r*mp*m + i*m + j;
-								if(idx > M){
+								if(idx >= M){
 									printf("warning: the nupts are trucated (%d)\n", m*m*m-n_set);
 									return;
 								}
-								x[idx*ix] = rg[r]*cos(pg[i])*sthg[j];
-								y[idx*iy] = rg[r]*sin(pg[i])*sthg[j];
-								z[idx*iz] = rg[r]*mug[j];
+								x[vecshuff[idx]*ix] = rg[r]*cos(pg[i])*sthg[j];
+								y[vecshuff[idx]*iy] = rg[r]*sin(pg[i])*sthg[j];
+								z[vecshuff[idx]*iz] = rg[r]*mug[j];
 								n_set++;
 							}
 						}
 					}
 					
+				}
+			}
+			break;
+		case 3:
+			{
+				for (int i = 0; i < M; i++) {
+					x[i] = scale*rand01()/N1*8;// x in [-pi,pi)
+					if(dim > 1)
+						y[i] = scale*rand01()/N2*8;
+					if(dim > 2)
+						z[i] = scale*rand01()/N3*8;
 				}
 			}
 			break;
@@ -161,9 +206,9 @@ void create_nupts(int nupts_distr, int dim, int M, FLT*x, FLT*y, FLT*z, int ix,
 	}	
 }
 void create_data_type1(int nupts_distr, int dim, int M, FLT* x, FLT* y, FLT* z, 
-		int ix, int iy, int iz, CUCPX* c, FLT scale)
+		int ix, int iy, int iz, CUCPX* c, FLT scale, int N1, int N2, int N3)
 {
-	create_nupts(nupts_distr, dim, M, x, y, z, ix, iy, iz, scale);
+	create_nupts(nupts_distr, dim, M, x, y, z, ix, iy, iz, scale, N1, N2, N3);
 	for (int i = 0; i < M; i++) {
 #ifdef GPU
 		c[i].x = randm11();
@@ -175,9 +220,10 @@ void create_data_type1(int nupts_distr, int dim, int M, FLT* x, FLT* y, FLT* z,
 }
 
 void create_data_type2(int nupts_distr, int dim, int M, FLT* x, FLT* y, FLT* z, 
-		int ix, int iy, int iz, int* Nmodes, CUCPX* f, FLT scale)
+		int ix, int iy, int iz, int* Nmodes, CUCPX* f, FLT scale, int N1, 
+        int N2, int N3)
 {
-	create_nupts(nupts_distr, dim, M, x, y, z, ix, iy, iz, scale);
+	create_nupts(nupts_distr, dim, M, x, y, z, ix, iy, iz, scale, N1, N2, N3);
 	for (int i = 0; i < Nmodes[0]*Nmodes[1]*Nmodes[2]; i++) {
 #ifdef GPU
 		f[i].x = randm11();
