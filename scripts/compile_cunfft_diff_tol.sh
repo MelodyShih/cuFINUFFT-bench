@@ -11,7 +11,8 @@ make install
 
 # Compile the timing code
 cd ~/cuFINUFFT-bench
-make clean
+rm cunfft_type1
+rm cunfft_type2
 make all
 
 # Go back the original directory

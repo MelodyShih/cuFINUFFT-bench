@@ -26,22 +26,22 @@ def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 	d = datetime.datetime.today()
 	date = d.strftime('%m%d')
 
-	nupts_distr = 1
+	nupts_distr=2
+	dim=2
 
-	finufft_filename=(resultdir+hostname+'_finufft_spread_3d_t'+str(nupts_distr)+\
-		'_'+date)
-	cufinufft_m1_filename=(resultdir+hostname+'_cufinufft_spread_3d_t'+str(nupts_distr)+\
-		'_'+date)
-	cufinufft_m2_filename=(resultdir+hostname+'_cufinufft_spread_3d_t'+str(nupts_distr)+\
-		'_'+date)
-	cunfft_filename=(resultdir+hostname+'_cunfft_spread_3d_t'+str(nupts_distr)+'_'\
+	finufft_filename=(resultdir+hostname+'_finufft_spread_'+str(dim)+'d_t'+str(nupts_distr)+\
+		'_double_'+date)
+	cufinufft_m1_filename=(resultdir+hostname+'_cufinufft_m1_spread_'+str(dim)+'d_t'+str(nupts_distr)+\
+		'_double_'+date)
+	cufinufft_m2_filename=(resultdir+hostname+'_cufinufft_m2_spread_'+str(dim)+'d_t'+str(nupts_distr)+\
+		'_double'+date)
+	cunfft_filename=(resultdir+hostname+'_cunfft_spread_'+str(dim)+'d_t'+str(nupts_distr)+'_double_'\
 		+date)
 
-	dim=3
 	reps=5
 	tol_totry     = [1e-3, 1e-7] #1e-14, 1e-10, 1e-6 , 1e-2
-	density_totry = [0.1, 1] #0.1, 1, 10
-	N1_totry      = [16, 32, 64, 128, 256] #128, ... ,4096 
+	density_totry = [0.1, 1, 10] #0.1, 1, 10
+	N1_totry      = [64, 128, 256, 512, 1024, 2048] #128, ... ,4096 
 	if OUTPUT is True:
 		np.savez(resultdir+'param_spread'+'_'+date, density=density_totry, tol=tol_totry, 
 			n1=N1_totry)
@@ -68,7 +68,7 @@ def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 					N2=N1
 				if(dim>2):
 					N3=N1
-				M = int(N1*N2*N3*8*density)
+				M = int(N1*N2*N3*pow(2,dim)*density)
 				print('(den, N1, N2, N3, M, tol)=(%f, %d, %d, %d, %d, %e)' %(density, N1, N2, N3, M, tol))
 				for nn in range(reps):
 					tt = 0.0
@@ -102,23 +102,23 @@ def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 						if cufinufft_m1_output is not None:
 							cufinufft_m1_t = float(find_between(cufinufft_m1_output, \
 								"Spread (1)", "s")) + \
-								float(find_between(cufinufft_output, \
-                            	"Setup Subprob properties", "s"))
+								float(find_between(cufinufft_m1_output, \
+								"Setup Subprob properties", "s"))
 							cufinufft_m1_tnow = min(cufinufft_m1_tnow,cufinufft_m1_t)
 						else:
 							cufinufft_m1_t = float('Inf')
 							cufinufft_m1_tnow = min(cufinufft_m1_tnow,cufinufft_m1_t)
-							break
+
 						if cufinufft_m2_output is not None:
 							cufinufft_m2_t = float(find_between(cufinufft_m2_output, \
 								"Spread (2)", "s")) + \
-								float(find_between(cufinufft_output, \
+								float(find_between(cufinufft_m2_output, \
                             	"Setup Subprob properties", "s"))
-							cufinufft_m2_tnow = min(cufinufft_m2_tnow,cufinufft_m1_t)
+							cufinufft_m2_tnow = min(cufinufft_m2_tnow,cufinufft_m2_t)
 						else:
 							cufinufft_m2_t = float('Inf')
 							cufinufft_m2_tnow = min(cufinufft_m2_tnow,cufinufft_m2_t)
-							break
+
 						if cunfft_output is not None:
 							cunfft_t = float(find_between(cunfft_output, \
 								"Spread:", "s"))
