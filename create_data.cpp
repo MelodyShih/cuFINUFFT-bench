@@ -252,6 +252,7 @@ void accuracy_check_type1(int dim, int iflag, int N1, int N2, int N3, int M, FLT
 	}
 	int it = N1/2+nt1 + N1*(N2/2+nt2) + N1*N2*(N3/2+nt3);   // index in complex F as 1d array
 	printf("[gpu   ] one mode: rel err in F[%ld,%ld] is %.3g\n",(int)nt1,(int)nt2,abs(Ft-fk[it])/infnorm(N,fk));
+	printf("[gpu   ] one mode: abs err in F[%ld,%ld] is %.3g\n",(int)nt1,(int)nt2,abs(Ft-fk[it]));
 }
 
 void accuracy_check_type2(int dim, int iflag, int N1, int N2, int N3, int M, FLT* x, 
@@ -273,4 +274,5 @@ void accuracy_check_type2(int dim, int iflag, int N1, int N2, int N3, int M, FLT
 		}
 	}
 	printf("[gpu   ] one targ: rel err in c[%ld] is %.3g\n",(int64_t)jt,abs(c[jt]-ct)/infnorm(M,c));
+	printf("[gpu   ] one targ: abs err in c[%ld] is %.3g\n",(int64_t)jt,abs(c[jt]-ct));
 }

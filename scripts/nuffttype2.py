@@ -26,7 +26,7 @@ def get_hostname():
 
 def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 	dim=3
-	reps=5
+	reps=3
 	tol_totry     = [1e-6] #1e-14, 1e-10, 1e-6 , 1e-2
 	nuptsdistr_totry =[1,2,3]
 	if dim == 2:
@@ -109,7 +109,7 @@ def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 								cunfft_tnow[1] = min(cunfft_tnow[1],cunfft_t)
 								cunfft_t = float(find_between(cunfft_output, \
 									"total+gpumem:", "s"))
-								cunfft_tnow[2] = min(cunfft_tnow[1],cunfft_t)
+								cunfft_tnow[2] = min(cunfft_tnow[2],cunfft_t)
 							else:
 								cunfft_t = [float('Inf'), float('Inf'), float('Inf')]
 								cunfft_tnow[0] = min(cunfft_tnow[0],cunfft_t[0])
