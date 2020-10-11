@@ -53,12 +53,12 @@ int main(int argc, char* argv[])
 	cudaEventCreate(&stop);
 
 	float *x, *y, *z;
-	cuFloatComplex *c, *fk;
+	complex<float> *c, *fk;
 	cudaMallocHost(&x, M*sizeof(float));
 	cudaMallocHost(&y, M*sizeof(float));
 	cudaMallocHost(&z, M*sizeof(float));
-	cudaMallocHost(&c, M*ntransf*sizeof(cuDoubleComplex));
-	cudaMallocHost(&fk,N1*N2*N3*ntransf*sizeof(cuDoubleComplex));
+	cudaMallocHost(&c, M*ntransf*sizeof(cuFloatComplex));
+	cudaMallocHost(&fk,N1*N2*N3*ntransf*sizeof(cuFloatComplex));
 
 	float *d_x, *d_y, *d_z;
 	cuFloatComplex *d_c, *d_fk;
@@ -77,10 +77,17 @@ int main(int argc, char* argv[])
 
 	create_data_type2(nupts_distr, dim, M, x, y, z, 1, 1, 1, nmodes, fk, M_PI, N1, N2, N3);
 
-	cudaMemcpy(d_x,x,M*sizeof(float),cudaMemcpyHostToDevice);
-	cudaMemcpy(d_y,y,M*sizeof(float),cudaMemcpyHostToDevice);
-	cudaMemcpy(d_z,z,M*sizeof(float),cudaMemcpyHostToDevice);
-	cudaMemcpy(d_fk,fk,N1*N2*N3*ntransf*sizeof(cuFloatComplex),cudaMemcpyHostToDevice);
+	cudaEventRecord(start);
+ 	{
+		cudaMemcpy(d_x,x,M*sizeof(float),cudaMemcpyHostToDevice);
+		cudaMemcpy(d_y,y,M*sizeof(float),cudaMemcpyHostToDevice);
+		cudaMemcpy(d_z,z,M*sizeof(float),cudaMemcpyHostToDevice);
+		cudaMemcpy(d_fk,fk,N1*N2*N3*ntransf*sizeof(cuFloatComplex),cudaMemcpyHostToDevice);
+	}
+	cudaEventRecord(stop);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	gpumemtime+=milliseconds;
 
 	cufinufftf_plan dplan;
 	cufinufft_opts opts;
@@ -151,7 +158,7 @@ int main(int argc, char* argv[])
 	printf("[time  ] cufinufft destroy:\t\t %.3g s\n", milliseconds/1000);
 
 	double ti=timer.elapsedsec();
-	printf("[time  ] Totaltime: %.3g s\n", totaltime/1000);
+	printf("[time  ] total: %.3g s\n", totaltime/1000);
 
 	cudaEventRecord(start);
 	{
@@ -161,7 +168,11 @@ int main(int argc, char* argv[])
 	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&milliseconds, start, stop);
 	gpumemtime+=milliseconds;
-	printf("[time  ] Totaltime(includememcpy): %.3g s\n", (totaltime+gpumemtime)/1000);
+	printf("[time  ] total+gpumem: %.3g s\n", (totaltime+gpumemtime)/1000);
+
+#ifdef ACCURACY
+	accuracy_check_type2(dim, iflag, N1, N2, N3, M, x, y, z, 1, 1, 1, c, fk, 1.0);
+#endif
 
 	cudaFreeHost(x);
 	cudaFreeHost(y);

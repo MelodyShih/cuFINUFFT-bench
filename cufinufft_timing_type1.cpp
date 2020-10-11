@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	cudaEventCreate(&stop);
 
 	float *x, *y, *z;
-	cuFloatComplex *c, *fk;
+	complex<float> *c, *fk;
 	cudaMallocHost(&x, M*sizeof(float));
 	if(dim > 1)
 		cudaMallocHost(&y, M*sizeof(float));
@@ -82,12 +82,19 @@ int main(int argc, char* argv[])
 
 	create_data_type1(nupts_distr, dim, M, x, y, z, 1, 1, 1, c, M_PI, N1, N2, N3);
 
-	cudaMemcpy(d_x,x,M*sizeof(float),cudaMemcpyHostToDevice);
-	if(dim > 1)
-		cudaMemcpy(d_y,y,M*sizeof(float),cudaMemcpyHostToDevice);
-	if(dim > 2)
-		cudaMemcpy(d_z,z,M*sizeof(float),cudaMemcpyHostToDevice);
-	cudaMemcpy(d_c,c,M*ntransf*sizeof(cuFloatComplex),cudaMemcpyHostToDevice);
+	cudaEventRecord(start);
+ 	{
+		cudaMemcpy(d_x,x,M*sizeof(float),cudaMemcpyHostToDevice);
+		if(dim > 1)
+			cudaMemcpy(d_y,y,M*sizeof(float),cudaMemcpyHostToDevice);
+		if(dim > 2)
+			cudaMemcpy(d_z,z,M*sizeof(float),cudaMemcpyHostToDevice);
+		cudaMemcpy(d_c,c,M*ntransf*sizeof(cuFloatComplex),cudaMemcpyHostToDevice);
+	}
+	cudaEventRecord(stop);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	gpumemtime+=milliseconds;
 
 	cufinufftf_plan dplan;
 	cufinufft_opts opts;
@@ -164,7 +171,7 @@ int main(int argc, char* argv[])
 	totaltime += milliseconds;
 	printf("[time  ] cufinufft destroy:\t\t %.3g s\n", milliseconds/1000);
 
-	printf("[time  ] Totaltime: %.3g s\n", totaltime/1000);
+	printf("[time  ] total: %.3g s\n", totaltime/1000);
 	cudaEventRecord(start);
 	{
 		cudaMemcpy(fk,d_fk,N1*N2*N3*ntransf*sizeof(cuFloatComplex),cudaMemcpyDeviceToHost);
@@ -173,7 +180,12 @@ int main(int argc, char* argv[])
 	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&milliseconds, start, stop);
 	gpumemtime+=milliseconds;
-	printf("[time  ] Totaltime(includememcpy): %.3g s\n", (totaltime+gpumemtime)/1000);
+	printf("[time  ] total+gpumem: %.3g s\n", (totaltime+gpumemtime)/1000);
+
+#ifdef ACCURACY
+	accuracy_check_type1(dim, iflag, N1, N2, N3, M, x, y, z, 1, 1, 1, c, fk, 1.0);
+	print_solution_type1(N1, N2, N3, fk);
+#endif
 
 	cudaFreeHost(x);
 	cudaFreeHost(y);

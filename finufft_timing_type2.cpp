@@ -89,6 +89,10 @@ int main(int argc, char *argv[]){
 	totaltime += ti;
 	printf("[time  ] finufft destroy: \t%.3g s\n", ti);
 	printf("[time  ] Totaltime: \t\t%.3g s\n", totaltime);
+
+#ifdef ACCURACY
+	accuracy_check_type2(dim, +1, N1, N2, N3, M, x, y, z, 1, 1, 1, c, F, 1.0);
+#endif
 	/*
 	   double n_x = round(0.45*N1); //check the answer for this arbitrary mode
 	   double n_y = round(-0.35*N2);

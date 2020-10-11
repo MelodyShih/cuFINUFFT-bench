@@ -43,7 +43,7 @@ cunfft_type2: cunfft_timing_type2.cpp utils.o
 		-I$(EIGEN)/\
 		-I$(CUNFFT)/src/\
 		-L$(CUNFFT)/lib/\
-		-lcunfft -lcudart\
+		-lcunfft -lcudart -lcufft\
 		-o $@
 
 cufinufft_type2: cufinufft_timing_type2.cpp
@@ -55,11 +55,16 @@ cufinufft_type2: cufinufft_timing_type2.cpp
 		-o $@
 
 finufft_type2: finufft_timing_type2.cpp
-	$(CXX) $^ -DSINGLE -fopenmp\
+	$(CXX) $^ -DSINGLE -fopenmp \
 		-I$(EIGEN)/\
 		-I$(FINUFFT)/include \
 		-L$(FINUFFT)/lib\
 		-lfinufft -lfftw3f -lfftw3f_omp\
+		-o $@
+
+writedata: write_data2files.cpp
+	$(CXX) $^ -DSINGLE\
+		-I$(EIGEN)/\
 		-o $@
 
 all: cunfft_type1 cufinufft_type1 finufft_type1 cunfft_type2 cufinufft_type2 finufft_type2

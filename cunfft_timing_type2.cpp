@@ -48,7 +48,6 @@ int main(int argc, char** argv)
 	}
 
 	int ns = std::ceil(-log10(tol/10.0));;
-	printf("ns = %d\n", ns);
 	if(2*CUT_OFF+2 != ns){
 		printf("2CUTOFF+2 is not equal to ns\n");
 		return 0;
@@ -76,29 +75,46 @@ void simple_test_cunfft_2d(int nupts_distr,int dim, int N1, int N2, int N3,
 	Nmodes[1]=N2;
 	Nmodes[2]=N3;
 
-	CNTime timer; timer.start();
-	CNTime datatimer;
+	{
+		cufftHandle fftplan;
+	        int nf2=1;
+        	int nf1=1;
+	    cufftPlan1d(&fftplan,nf1,CUFFT_C2C,1);
+	}
 
 	cunfft_plan p;
+	GPUTimer t=getTimeGPU();
 	cunfft_init(&p,dim,N,M);
+	double totalgpumem = elapsedGPUTime(t,getTimeGPU());
 
 	/* create random data */
-	datatimer.start();
 	create_data_type2(nupts_distr, dim, M, &p.x[0], &p.x[1], &p.x[2], dim, dim, 
-					  dim, Nmodes, &p.g[0], 0.5, N1, N2, N3);
+					  dim, Nmodes, (std::complex<float>*) &p.f_hat[0], 0.5, N1, N2, N3);
 
-	int numOfRuns=1;
-	cunfft_reinitAd(&p);
-	copyDataToDeviceAd(&p);
-	GPUTimer t=getTimeGPU();
+	t=getTimeGPU();
+	copyDataToDevice(&p);
+	totalgpumem += elapsedGPUTime(t,getTimeGPU());
+
+	t=getTimeGPU();
 	cunfft_transform(&p);
-	double runTime = elapsedGPUTime(t,getTimeGPU());
-	p.CUNFFTTimes.runTime=runTime;
-	copyDataToHostAd(&p);
-	printf("[time   ] unspread: \t%.3g s\n", p.CUNFFTTimes.time_CONV/numOfRuns);
-	printf("[time   ] fft: \t\t%.3g s\n",    p.CUNFFTTimes.time_FFT/numOfRuns);
-	printf("[time   ] convolve: \t%.3g s\n", p.CUNFFTTimes.time_ROC/numOfRuns);
-	printf("[time   ] Totaltime: %.3g s\n", p.CUNFFTTimes.runTime/numOfRuns);
+	double exec= elapsedGPUTime(t,getTimeGPU());
+
+	t=getTimeGPU();
+	copyDataToHost(&p);
+	totalgpumem += elapsedGPUTime(t,getTimeGPU());
+
+	printf("[time   ] unspread: \t%.3g s\n", p.CUNFFTTimes.time_CONV);
+	printf("[time   ] fft: \t\t%.3g s\n",    p.CUNFFTTimes.time_FFT);
+	printf("[time   ] convolve: \t%.3g s\n", p.CUNFFTTimes.time_ROC);
+	printf("[time   ] exec: %.3g s\n", exec);
+	printf("[time   ] total+gpumem: \t%.3g s\n", totalgpumem);
+
+#ifdef ACCURACY
+	accuracy_check_type2(dim, -1, N1, N2, N3, M, 
+						 &p.x[0], &p.x[1], &p.x[2],dim, dim, dim, 
+				         (std::complex<float> *)&p.f[0], 
+						 (std::complex<float> *)&p.f_hat[0], 2*M_PI);
+#endif
 
 	cunfft_finalize(&p);
 }
