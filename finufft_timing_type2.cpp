@@ -88,7 +88,7 @@ int main(int argc, char *argv[]){
 	ti=timer.elapsedsec();
 	totaltime += ti;
 	printf("[time  ] finufft destroy: \t%.3g s\n", ti);
-	printf("[time  ] Totaltime: \t\t%.3g s\n", totaltime);
+	printf("[time  ] total: \t\t%.3g s\n", totaltime);
 
 #ifdef ACCURACY
 	accuracy_check_type2(dim, +1, N1, N2, N3, M, x, y, z, 1, 1, 1, c, F, 1.0);
