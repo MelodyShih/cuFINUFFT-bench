@@ -40,7 +40,7 @@ cmake FLAG setting
 * -DCUDA_CUDA_LIBRARY
 * -DMILLI_SEC
 
-## Installing gpuNUFFT (same instruction from )
+## Installing gpuNUFFT
 ```
 module load cuda/10.0.130_410.48
 module load gcc/7.4.0
