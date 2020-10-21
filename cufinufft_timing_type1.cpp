@@ -183,8 +183,8 @@ int main(int argc, char* argv[])
 	printf("[time  ] total+gpumem: %.3g s\n", (totaltime+gpumemtime)/1000);
 
 #if 1
-	accuracy_check_type1(dim, iflag, N1, N2, N3, M, x, y, z, 1, 1, 1, c, fk, 1.0);
-	//print_solution_type1(N1, N2, N3, fk);
+	accuracy_check_type1(1, dim, iflag, N1, N2, N3, M, x, y, z, 1, 1, 1, c, fk, 1.0);
+	//print_solution_type1(1, N1, N2, N3, fk);
 #endif
 
 	cudaFreeHost(x);

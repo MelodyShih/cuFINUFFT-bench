@@ -40,7 +40,7 @@ int main(int argc, char *argv[]){
 
 	nufft_opts opts; 
 	finufft_default_opts(&opts);
-	opts.debug = 2;// some timing results
+	opts.debug = 0;// some timing results
 
 	float *x, *y, *z;
 	complex<float> *c, *F;  	
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]){
 	double totaltime=0;
 	CNTime timer; timer.start();
 	finufftf_plan plan;
-	ier = finufftf_makeplan(type,dim,nmodes,+1,ntrans,tol,&plan,NULL);
+	ier = finufftf_makeplan(type,dim,nmodes,+1,ntrans,tol,&plan,&opts);
 	double ti=timer.elapsedsec();
 	totaltime += ti;
 	printf("[time  ] finufft makeplan: \t%.3g s\n", ti);

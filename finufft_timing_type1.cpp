@@ -40,7 +40,8 @@ int main(int argc, char *argv[]){
 
 	nufft_opts opts; 
 	finufft_default_opts(&opts);
-	opts.debug = 2;// some timing results
+	opts.debug = 0;// some timing results
+	//opts.spread_debug = 1;
 
 	float *x, *y, *z;
 	complex<float> *c, *F;  	
@@ -65,7 +66,7 @@ int main(int argc, char *argv[]){
 	double totaltime=0;
 	CNTime timer; timer.start();
 	finufftf_plan plan;
-	ier = finufftf_makeplan(type,dim,nmodes,+1,ntrans,tol,&plan,NULL);
+	ier = finufftf_makeplan(type,dim,nmodes,+1,ntrans,tol,&plan,&opts);
 	double ti=timer.elapsedsec();
 	totaltime += ti;
 	printf("[time  ] finufft makeplan: \t%.3g s\n", ti);
@@ -87,8 +88,8 @@ int main(int argc, char *argv[]){
 	printf("[time  ] total: \t\t%.3g s\n", totaltime);
 
 #ifdef ACCURACY
-	accuracy_check_type1(dim, +1, N1, N2, N3, M, x, y, z, 1, 1, 1, c, F, 1.0);
-	print_solution_type1(N1, N2, N3, F);
+	accuracy_check_type1(0, dim, +1, N1, N2, N3, M, x, y, z, 1, 1, 1, c, F, 1.0);
+	//print_solution_type1(0, N1, N2, N3, F);
 #endif
 
 	return ier;

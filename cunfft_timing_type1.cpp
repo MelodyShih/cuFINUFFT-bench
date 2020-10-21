@@ -48,9 +48,8 @@ int main(int argc, char** argv)
 	}
 
 	int ns = std::ceil(-log10(tol/10.0));;
-	printf("ns = %d\n", ns);
 	if(2*CUT_OFF+2 != ns){
-		printf("2CUTOFF+2 is not equal to ns\n");
+		printf("2CUTOFF+2 (CUTOFF=%d) is not equal to ns (ns=%d)\n", CUT_OFF, ns);
 		return 0;
 	}
 	simple_test_cunfft_2d_Ad(nupts_distr, dim, N1, N2, N3, M);
@@ -108,11 +107,11 @@ void simple_test_cunfft_2d_Ad(int nupts_distr,int dim, int N1, int N2, int N3,
 	printf("[time   ] total+gpumem: \t%.3g s\n", totalgpumem);
 
 #ifdef ACCURACY
-	accuracy_check_type1(dim, +1, N1, N2, N3, M, 
+	accuracy_check_type1(3, dim, +1, N1, N2, N3, M, 
 						 &p.x[0], &p.x[1], &p.x[2],dim, dim, dim, 
 				         (std::complex<float> *)&p.f[0], 
 						 (std::complex<float> *)p.f_hat, 2*M_PI);
-	print_solution_type1(N1, N2, N3, (std::complex<float> *)p.f_hat);
+	//print_solution_type1(3, N1, N2, N3, (std::complex<float> *)p.f_hat);
 #endif
 	cunfft_finalize(&p);
 }

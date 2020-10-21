@@ -33,8 +33,8 @@ fprintf('2D type-1: rel err in F[%d,%d] is %.3g\n',nt1,nt2,abs((fe-f(nt1+of1,nt2
 fprintf('2D type-1: abs err in F[%d,%d] is %.3g\n',nt1,nt2,abs((fe-f(nt1+of1,nt2+of2))))
 
 isign = -1;
-N1=8;
-N2=8;
+N1=1024;
+N2=1024;
 N3=1;
 dim=2;
 M = N1*N2*N3;
@@ -49,8 +49,8 @@ ce = sum(f(:).*exp(1i*isign*2*pi*(mm1(:)*x(j)+mm2(:)*y(j))))/sqrt(2*N1)/sqrt(2*N
 [timeplan timetotalgem c] = gpunufft_2dtype2(dim, N1, N2, M, k, f, w);
 ce
 c(j)
-fprintf('2Dmany type-2: rel err in c[%d] is %.3g\n',j,abs((ce-c(j))/max(c(:))))
-fprintf('2Dmany type-2: abs err in c[%d] is %.3g\n',j,abs((ce-c(j))))
+fprintf('2D type-2: rel err in c[%d] is %.3g\n',j,abs((ce-c(j))/max(c(:))))
+fprintf('2D type-2: abs err in c[%d] is %.3g\n',j,abs((ce-c(j))))
 
 
 function [timeFTplan, timeFTH, f] = gpunufft_2dtype1(dim, N1, N2, M, k, c, w)

@@ -95,7 +95,7 @@ end
 
 function [timeFTplan, timeFTH] = gpunufft_3dtype1(dim, N1, N2, N3, M, k, c, w)
 	osf = 2;
-	kw = 3; %1 also possible (nearest neighbor) 
+	kw = 8; %1 also possible (nearest neighbor) 
 	sw = 8;
 	atomic = true;
 	textures = true;
