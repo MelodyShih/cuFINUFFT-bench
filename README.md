@@ -66,7 +66,7 @@ cmake .. -DMATLAB_ROOT_DIR=/cm/shared/sw/pkg/vendor/matlab/R2020a
   
   Output:
   
-  * `f_k`: a size `N1xN2x...xNd` complex double (float) array of `N1xN2x...xNd` output modes. The modes are ordered from `-N/2` to `N/2-1` in each dimension and are ordered first in dimension `x`, then in `y` and last in `z`, i.e. in 3D, `f_k[ms+mt*N1+mu*N1*N2]` approximates <img src="https://latex.codecogs.com/gif.latex?\sum_{j=0}^{M-1}c_je^{i\left(ms&plus;N_1/2)x_j&space;&plus;&space;(mt&plus;N_2/2)y_j&space;&plus;&space;(mu&plus;N_3/2)z_j\right)}" title="\sum_{j=0}^{M-1}c_je^{i\left(ms+N_1/2)x_j + (mt+N_2/2)y_j + (mu+N_3/2)z_j\right)}" />.
+  * `f_k`: a size `N1xN2x...xNd` complex double (float) array of `N1xN2x...xNd` output modes. The modes are ordered from `-N/2` to `N/2-1` in each dimension and are ordered first in dimension `x`, then in `y` and last in `z`, i.e. in 3D, `f_k[k1+k2*N1+k3*N1*N2]` approximates <img src="https://latex.codecogs.com/gif.latex?\sum_{j=0}^{M-1}c_je^{i\left(k_1&plus;N_1/2)x_j&space;&plus;&space;(k_2&plus;N_2/2)y_j&space;&plus;&space;(k_3&plus;N_3/2)z_j\right)}" title="\sum_{j=0}^{M-1}c_je^{i\left(k_1+N_1/2)x_j + (k_2+N_2/2)y_j + (k_3+N_3/2)z_j\right)}" />.
 
 2. CUNFFT 
   <img src="https://latex.codecogs.com/gif.latex?f_{k_1,k_2,k_3}&space;=&space;\sum_{j=1}^M&space;c_j&space;e^{2\pi&space;i(k_1x_j&plus;k_2y_j&plus;k_3z_j)},~x_j,y_j,z_j&space;\in&space;[-0.5,&space;0.5)" title="f_{k_1,k_2,k_3} = \sum_{j=1}^M c_j e^{2\pi i(k_1x_j+k_2y_j+k_3z_j)},~x_j,y_j,z_j \in [-0.5, 0.5]" />
@@ -78,7 +78,7 @@ cmake .. -DMATLAB_ROOT_DIR=/cm/shared/sw/pkg/vendor/matlab/R2020a
   
   Output:
   
-  * `f_k` = a size `N1xN2x...xNd`complex double (float) array of `N1xN2x...xNd` modes. The modes are ordered from `-N/2` to `N/2-1` in each dimension. Modes are ordered first in dimension `z`, then in `y` and last in `x`, i.e. in 3D, `f_k[mu+mt*N3+ms*N3*N2]` is the Fourier coefficient approximates <img src="https://latex.codecogs.com/gif.latex?\sum_{j=0}^{M-1}c_je^{2\pi&space;i\left((ms&plus;N_1/2)x_j&space;&plus;&space;(mt&plus;N_2/2)y_j&space;&plus;&space;(mu&plus;N_3/2)z_j\right)}" title="\sum_{j=0}^{M-1}c_je^{2\pi i\left((ms+N_1/2)x_j + (mt+N_2/2)y_j + (mu+N_3/2)z_j\right)}" />.
+  * `f_k` = a size `N1xN2x...xNd`complex double (float) array of `N1xN2x...xNd` modes. The modes are ordered from `-N/2` to `N/2-1` in each dimension. Modes are ordered first in dimension `z`, then in `y` and last in `x`, i.e. in 3D, `f_k[k_3+k_2*N3+k_1*N3*N2]` is the Fourier coefficient approximates <img src="https://latex.codecogs.com/gif.latex?\sum_{j=0}^{M-1}c_je^{i\left(k_1&plus;N_1/2)x_j&space;&plus;&space;(k_2&plus;N_2/2)y_j&space;&plus;&space;(k_3&plus;N_3/2)z_j\right)}" title="\sum_{j=0}^{M-1}c_je^{i\left(k_1+N_1/2)x_j + (k_2+N_2/2)y_j + (k_3+N_3/2)z_j\right)}" />.
   
 3. gpuNUFFT (TODO)
  
