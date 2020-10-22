@@ -51,6 +51,7 @@ cd CUDA
 mkdir -p build
 cd build
 cmake .. -DMATLAB_ROOT_DIR=/cm/shared/sw/pkg/vendor/matlab/R2020a
+make
 ```
 ## Usage
 - [Step 1] Install all the libraries
