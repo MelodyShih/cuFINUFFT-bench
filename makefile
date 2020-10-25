@@ -2,7 +2,7 @@ CC=gcc
 CXX=g++
 NVCC=nvcc
 
-NVCCFLAGS=-arch=sm_70 --default-stream per-thread
+NVCCFLAGS=-arch=sm_70
 CXXFLAGS=
 
 FINUFFT=/mnt/home/yshih/finufft

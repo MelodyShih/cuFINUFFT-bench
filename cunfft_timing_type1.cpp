@@ -83,6 +83,7 @@ void simple_test_cunfft_2d_Ad(int nupts_distr,int dim, int N1, int N2, int N3,
 	GPUTimer t=getTimeGPU();
 	cunfft_init(&p,dim,N,M);
 	double totalgpumem = elapsedGPUTime(t,getTimeGPU());
+	totalgpumem -= p.CUNFFTTimes.runTime; // remove cpu memory allocation time
 
 	/* create random data */
 	create_data_type1(nupts_distr, dim, M, &p.x[0], &p.x[1], &p.x[2], 

@@ -41,6 +41,7 @@ int main(int argc, char *argv[]){
 	nufft_opts opts; 
 	finufft_default_opts(&opts);
 	opts.debug = 0;// some timing results
+	opts.upsampfac = 2;// some timing results
 	//opts.spread_debug = 1;
 
 	float *x, *y, *z;
