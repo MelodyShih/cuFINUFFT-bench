@@ -47,11 +47,14 @@ int main(int argc, char** argv)
 		sscanf(argv[7],"%lf",&w); tol  = (float)w;
 	}
 
+#ifdef ACCURACY
 	int ns = std::ceil(-log10(tol/10.0));;
 	if(2*CUT_OFF+2 != ns){
 		printf("2CUTOFF+2 (CUTOFF=%d) is not equal to ns (ns=%d)\n", CUT_OFF, ns);
 		return 0;
 	}
+	printf("[acc check] ns=%d\n", 2*CUT_OFF+2);
+#endif 
 	simple_test_cunfft_2d_Ad(nupts_distr, dim, N1, N2, N3, M);
 
 	return EXIT_SUCCESS;

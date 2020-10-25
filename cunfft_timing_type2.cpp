@@ -47,11 +47,14 @@ int main(int argc, char** argv)
 		sscanf(argv[7],"%lf",&w); tol  = (float)w;
 	}
 
+#ifdef ACCURACY
 	int ns = std::ceil(-log10(tol/10.0));;
 	if(2*CUT_OFF+2 != ns){
 		printf("2CUTOFF+2 is not equal to ns\n");
 		return 0;
 	}
+	printf("[acc check] ns=%d\n", 2*CUT_OFF+2);
+#endif 
 	simple_test_cunfft_2d(nupts_distr, dim, N1, N2, N3, M);
 
 	return EXIT_SUCCESS;
@@ -62,8 +65,6 @@ void simple_test_cunfft_2d(int nupts_distr,int dim, int N1, int N2, int N3,
 		int M)
 {
 	resetDevice();
-	printf("[info   ] (N1,N2,N3)=(%d,%d,%d), M=%d, spreadwidth=%d\n", 
-			N1,N2,N3,M,2*CUT_OFF+2);
 
 	uint_t N[3];
 	N[0]=N1;
@@ -110,7 +111,7 @@ void simple_test_cunfft_2d(int nupts_distr,int dim, int N1, int N2, int N3,
 	printf("[time   ] total+gpumem: \t%.3g s\n", totalgpumem);
 
 #ifdef ACCURACY
-	accuracy_check_type2(dim, -1, N1, N2, N3, M, 
+	accuracy_check_type2(3, dim, -1, N1, N2, N3, M, 
 						 &p.x[0], &p.x[1], &p.x[2],dim, dim, dim, 
 				         (std::complex<float> *)&p.f[0], 
 						 (std::complex<float> *)&p.f_hat[0], 2*M_PI);

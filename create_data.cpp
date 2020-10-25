@@ -43,6 +43,9 @@ typedef std::complex<double> CPX;
 #endif
 
 using namespace Eigen;
+
+#include "contrib/dirft2d.cpp"
+#include "contrib/dirft3d.cpp"
 /* 
  * Create data for Type 1 transformation (nonuniform -> uniform) 
  *
@@ -234,6 +237,7 @@ void print_solution_type1(int lib, int N1, int N2, int N3, CPX* f)
 	}	
 }
 
+/* Complex util from FINUFFT src/utils.cpp*/
 FLT infnorm(int n, CPX* a)
 // ||a||_infty
 {
@@ -244,6 +248,19 @@ FLT infnorm(int n, CPX* a)
   }
   return sqrt(nrm);
 }
+
+FLT relerrtwonorm(int n, CPX* a, CPX* b)
+// ||a-b||_2 / ||a||_2
+{
+  FLT err = 0.0, nrm = 0.0;
+  for (int m=0; m<n; ++m) {
+    nrm += real(conj(a[m])*a[m]);
+    CPX diff = a[m]-b[m];
+    err += real(conj(diff)*diff);
+  }
+  return sqrt(err/nrm);
+}
+
 
 void accuracy_check_type1(int lib, int dim, int iflag, int N1, int N2, int N3, int M, FLT* x, 
 	FLT* y, FLT *z, int ix, int iy, int iz, CPX* c, CPX* fk, FLT scale)
@@ -264,9 +281,9 @@ void accuracy_check_type1(int lib, int dim, int iflag, int N1, int N2, int N3, i
 			it = N1/2+nt2 + N1*(N2/2+nt1);
 		else // cuFINUFFT, FINUFFT
 			it = N1/2+nt1 + N1*(N2/2+nt2);
-		printf("[gpu   ] one mode: rel err in F[%ld,%ld] is %.3g\n",(int)nt1,
+		printf("[acc check] one mode: rel err in F[%ld,%ld] is %.3g\n",(int)nt1,
 				(int)nt2,abs(Ft-fk[it])/infnorm(N,fk));
-		printf("[gpu   ] one mode: abs err in F[%ld,%ld] is %.3g\n",(int)nt1,
+		printf("[acc check] one mode: abs err in F[%ld,%ld] is %.3g\n",(int)nt1,
 				(int)nt2,abs(Ft-fk[it]));
 	}
 	if(dim==3){
@@ -274,31 +291,66 @@ void accuracy_check_type1(int lib, int dim, int iflag, int N1, int N2, int N3, i
 			it = N3/2+nt3 + N3*(N2/2+nt2) + N3*N2*(N1/2+nt1);   // index in complex F as 1d array
 		else
 			it = N1/2+nt1 + N1*(N2/2+nt2) + N1*N2*(N3/2+nt3);   // index in complex F as 1d array
-		printf("[gpu   ] one mode: rel err in F[%ld,%ld,%ld] is %.3g\n",
+		printf("[acc check] one mode: rel err in F[%ld,%ld,%ld] is %.3g\n",
 				(int)nt1,(int)nt2,(int)nt3, abs(Ft-fk[it])/infnorm(N,fk));
-		printf("[gpu   ] one mode: abs err in F[%ld,%ld,%ld] is %.3g\n",
+		printf("[acc check] one mode: abs err in F[%ld,%ld,%ld] is %.3g\n",
 				(int)nt1,(int)nt2,(int)nt3, abs(Ft-fk[it]));
+	}
+	if( N<1e5){
+		CPX* Ft = (CPX*)malloc(sizeof(CPX)*N);
+		if(dim==2)
+			dirft2d1(lib,M,x,y,ix,iy,c,iflag,N1,N2,Ft);
+		if(dim==3)
+			dirft3d1(lib,M,x,y,z,ix,iy,iz,c,iflag,N1,N2,N3,Ft);
+		float err = relerrtwonorm(N,Ft,fk);
+		printf("[acc check] dirft: rel l2-err of result F is %.3g\n",err);
+		free(Ft);
 	}
 }
 
-void accuracy_check_type2(int dim, int iflag, int N1, int N2, int N3, int M, FLT* x, 
-	FLT* y, FLT *z, int ix, int iy, int iz, CPX* c, CPX* fk, FLT scale)
+void accuracy_check_type2(int lib, int dim, int iflag, int N1, int N2, int N3, 
+    int M, FLT* x, FLT* y, FLT *z, int ix, int iy, int iz, CPX* c, CPX* fk, FLT scale)
 {
+	// Check one non-uniform point
 	int N=N1*N2*N3;
 	int nt1 = (int)(0.37*N1), nt2 = (int)(0.26*N2), nt3 = (int) (0.18*N3);  
 	int jt = M/2;          // check arbitrary choice of one targ pt
 	CPX ct = CPX(0,0), J = IMA*(FLT)iflag*(FLT)scale;
-	int m=0;
-	for (int m3=-(N3/2); m3<=(N3-1)/2; ++m3){  // loop in correct order over F
-		for (int m2=-(N2/2); m2<=(N2-1)/2; ++m2){  // loop in correct order over F
-			for (int m1=-(N1/2); m1<=(N1-1)/2; ++m1){
-				if(dim==2)
-					ct += fk[m++] * exp(J*(m1*x[jt*ix] + m2*y[jt*iy]));   // crude direct
-				if(dim==3)
-					ct += fk[m++] * exp(J*(m1*x[jt*ix] + m2*y[jt*iy] + m3*z[jt*iz]));   // crude direct
+	if(lib==3){
+		int m=0;
+		for (int m1=-(N1/2); m1<=(N1-1)/2; ++m1){
+			for (int m2=-(N2/2); m2<=(N2-1)/2; ++m2){  // loop in correct order over F
+				for (int m3=-(N3/2); m3<=(N3-1)/2; ++m3){  // loop in correct order over F
+					if(dim==2)
+						ct += fk[m++] * exp(J*(m1*x[jt*ix] + m2*y[jt*iy]));   // crude direct
+					if(dim==3)
+						ct += fk[m++] * exp(J*(m1*x[jt*ix] + m2*y[jt*iy] + m3*z[jt*iz]));   // crude direct
+				}
+			}
+		}
+	}else{
+		int m=0;
+		for (int m3=-(N3/2); m3<=(N3-1)/2; ++m3){  // loop in correct order over F
+			for (int m2=-(N2/2); m2<=(N2-1)/2; ++m2){  // loop in correct order over F
+				for (int m1=-(N1/2); m1<=(N1-1)/2; ++m1){
+					if(dim==2)
+						ct += fk[m++] * exp(J*(m1*x[jt*ix] + m2*y[jt*iy]));   // crude direct
+					if(dim==3)
+						ct += fk[m++] * exp(J*(m1*x[jt*ix] + m2*y[jt*iy] + m3*z[jt*iz]));   // crude direct
+				}
 			}
 		}
 	}
-	printf("[gpu   ] one targ: rel err in c[%ld] is %.3g\n",(int64_t)jt,abs(c[jt]-ct)/infnorm(M,c));
-	printf("[gpu   ] one targ: abs err in c[%ld] is %.3g\n",(int64_t)jt,abs(c[jt]-ct));
+	printf("[acc check] one targ: rel err in c[%ld] is %.3g\n",(int64_t)jt,abs(c[jt]-ct)/infnorm(M,c));
+	printf("[acc check] one targ: abs err in c[%ld] is %.3g\n",(int64_t)jt,abs(c[jt]-ct));
+
+	if(N<1e5){
+		CPX* Ct = (CPX*)malloc(sizeof(CPX)*M);
+		if(dim==2)
+			dirft2d2(lib,M,x,y,ix,iy,Ct,iflag,N1,N2,fk);
+		if(dim==3)
+			dirft3d2(lib,M,x,y,z,ix,iy,iz,Ct,iflag,N1,N2,N3,fk);
+		float err = relerrtwonorm(M,Ct,c);
+		printf("[acc check] dirft: rel l2-err of result c is %.3g\n",err);
+	}
 }

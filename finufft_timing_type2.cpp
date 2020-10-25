@@ -73,6 +73,9 @@ int main(int argc, char *argv[]){
 	double ti=timer.elapsedsec();
 	totaltime += ti;
 	printf("[time  ] finufft makeplan: \t%.3g s\n", ti);
+#ifdef ACCURACY
+	printf("[acc check] ns=%d\n", plan->spopts.nspread);
+#endif
 	timer.start();
 	finufftf_setpts(plan,M,x,y,z,0,NULL,NULL,NULL);
 	ti=timer.elapsedsec();
@@ -91,32 +94,8 @@ int main(int argc, char *argv[]){
 	printf("[time  ] total: \t\t%.3g s\n", totaltime);
 
 #ifdef ACCURACY
-	accuracy_check_type2(dim, +1, N1, N2, N3, M, x, y, z, 1, 1, 1, c, F, 1.0);
+	accuracy_check_type2(0, dim, +1, N1, N2, N3, M, x, y, z, 1, 1, 1, c, F, 1.0);
 #endif
-	/*
-	   double n_x = round(0.45*N1); //check the answer for this arbitrary mode
-	   double n_y = round(-0.35*N2);
-
-	   complex<double> Ftest(0,0);
-	   for(int j = 0; j < M; j++){
-	   Ftest += c[j]*exp(I*(n_x*x[j]+n_y*y[j]));
-	   }
-
-		//indicies in output array for this frequency pair?
-		int n_out_x = n_x + (int)N1/2; 
-		int n_out_y = n_y + (int)N2/2;
-		int indexOut = n_out_x + n_out_y*(N1);  
-
-		//compute inf norm of F 
-		double Fmax = 0.0;
-		for (int m=0; m<N1*N2; m++) {
-		double aF = abs(F[m]);
-		if (aF>Fmax) Fmax=aF;
-		}
-
-		//compute relative error
-		double err = abs(F[indexOut] - Ftest)/Fmax; 
-	*/
 	return ier;
 
 }

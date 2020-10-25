@@ -114,8 +114,6 @@ int main(int argc, char* argv[])
 	nmodes[1] = N2;
 	nmodes[2] = N3;
 
-	int ns = std::ceil(-log10(tol/10.0));//spread width
-
 	cudaEventRecord(start);
  	{
 		cufftHandle fftplan;
@@ -140,6 +138,9 @@ int main(int argc, char* argv[])
 	cudaEventElapsedTime(&milliseconds, start, stop);
 	totaltime += milliseconds;
 	printf("[time  ] cufinufft plan:\t\t %.3g s\n", milliseconds/1000);
+#ifdef ACCURACY
+	printf("[acc check] ns=%d\n", dplan->spopts.nspread);
+#endif
 
 	cudaEventRecord(start);
 	{
@@ -182,7 +183,7 @@ int main(int argc, char* argv[])
 	gpumemtime+=milliseconds;
 	printf("[time  ] total+gpumem: %.3g s\n", (totaltime+gpumemtime)/1000);
 
-#if 1
+#ifdef ACCURACY
 	accuracy_check_type1(1, dim, iflag, N1, N2, N3, M, x, y, z, 1, 1, 1, c, fk, 1.0);
 	//print_solution_type1(1, N1, N2, N3, fk);
 #endif

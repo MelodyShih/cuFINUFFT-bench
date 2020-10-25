@@ -67,6 +67,10 @@ int main(int argc, char *argv[]){
 	CNTime timer; timer.start();
 	finufftf_plan plan;
 	ier = finufftf_makeplan(type,dim,nmodes,+1,ntrans,tol,&plan,&opts);
+#ifdef ACCURACY
+	printf("[acc check] ns=%d\n", plan->spopts.nspread);
+#endif
+
 	double ti=timer.elapsedsec();
 	totaltime += ti;
 	printf("[time  ] finufft makeplan: \t%.3g s\n", ti);
@@ -86,11 +90,11 @@ int main(int argc, char *argv[]){
 	totaltime += ti;
 	printf("[time  ] finufft destroy: \t%.3g s\n", ti);
 	printf("[time  ] total: \t\t%.3g s\n", totaltime);
-
 #ifdef ACCURACY
-	accuracy_check_type1(0, dim, +1, N1, N2, N3, M, x, y, z, 1, 1, 1, c, F, 1.0);
+	//accuracy_check_type1(0, dim, +1, N1, N2, N3, M, x, y, z, 1, 1, 1, c, F, 1.0);
 	//print_solution_type1(0, N1, N2, N3, F);
 #endif
+
 
 	return ier;
 
