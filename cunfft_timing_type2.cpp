@@ -78,7 +78,6 @@ void simple_test_cunfft_2d(int nupts_distr,int dim, int N1, int N2, int N3,
 
 	{
 		cufftHandle fftplan;
-	        int nf2=1;
         	int nf1=1;
 	    cufftPlan1d(&fftplan,nf1,CUFFT_C2C,1);
 	}
@@ -100,6 +99,7 @@ void simple_test_cunfft_2d(int nupts_distr,int dim, int N1, int N2, int N3,
 	t=getTimeGPU();
 	cunfft_transform(&p);
 	double exec= elapsedGPUTime(t,getTimeGPU());
+	totalgpumem += exec;
 
 	t=getTimeGPU();
 	copyDataToHost(&p);
