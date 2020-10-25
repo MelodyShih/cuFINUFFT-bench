@@ -27,7 +27,8 @@ def get_hostname():
 def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 	dim=3
 	reps=3
-	tol_totry     = [1e-6] #1e-14, 1e-10, 1e-6 , 1e-2
+	tol_totry     = [1e-7] #1e-14, 1e-10, 1e-6 , 1e-2
+	cutoff_totry  = [3] #1e-14, 1e-10, 1e-6 , 1e-2
 	nuptsdistr_totry =[1,2,3]
 	if dim == 2:
 		density_totry = [0.1, 1, 10] #0.1, 1, 10
@@ -41,7 +42,7 @@ def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 		for t,tol in enumerate(tol_totry):
 			if has_gpu is True:
 				FNULL = open(os.devnull, 'w')
-				cutoff=(int(np.ceil((-np.ceil(np.log10(tol/10))-2)/2.0)))
+				cutoff=cutoff_totry[t]
 				subprocess.call(["sh","compile_cunfft_diff_tol.sh", str(cutoff)], stdout=FNULL,stderr=subprocess.STDOUT)
 			for d,density in enumerate(density_totry):
 				for n,N1 in enumerate(N1_totry):
