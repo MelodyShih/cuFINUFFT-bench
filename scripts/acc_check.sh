@@ -14,38 +14,38 @@ M=$(echo $N1*$N2*$N3 | bc)
 
 echo lib type N1 N2 N3 M w reltol
 # FINUFFT
-OUT=$(../finufft_type1 1 $DIM $N1 $N2 $N3 $M 1e-1)
+OUT=$(../finufft_type1 1 $DIM $N1 $N2 $N3 $M 1e-0)
 acc=$(echo $OUT | grep -o -P '(?<=F is).*')
 ns=$(echo $OUT | grep -o -P '(?<=ns=).*?(?= (\[time))')
 echo 0 1 $N1 $N2 $N3 $M $ns $acc
-OUT=$(../finufft_type2 1 $DIM $N1 $N2 $N3 $M 1e-1)
+OUT=$(../finufft_type2 1 $DIM $N1 $N2 $N3 $M 1e-0)
 acc=$(echo $OUT | grep -o -P '(?<=c is).*')
 ns=$(echo $OUT | grep -o -P '(?<=ns=).*?(?= (\[time))')
 echo 0 2 $N1 $N2 $N3 $M $ns $acc
 
-OUT=$(../finufft_type1 1 $DIM $N1 $N2 $N3 $M 1e-3)
+OUT=$(../finufft_type1 1 $DIM $N1 $N2 $N3 $M 1e-2)
 acc=$(echo $OUT | grep -o -P '(?<=F is).*')
 ns=$(echo $OUT | grep -o -P '(?<=ns=).*?(?= (\[time))')
 echo 0 1 $N1 $N2 $N3 $M $ns $acc
-OUT=$(../finufft_type2 1 $DIM $N1 $N2 $N3 $M 1e-3)
+OUT=$(../finufft_type2 1 $DIM $N1 $N2 $N3 $M 1e-2)
 acc=$(echo $OUT | grep -o -P '(?<=c is).*')
 ns=$(echo $OUT | grep -o -P '(?<=ns=).*?(?= (\[time))')
 echo 0 2 $N1 $N2 $N3 $M $ns $acc
 
-OUT=$(../finufft_type1 1 $DIM $N1 $N2 $N3 $M 1e-5)
+OUT=$(../finufft_type1 1 $DIM $N1 $N2 $N3 $M 1e-4)
 acc=$(echo $OUT | grep -o -P '(?<=F is).*')
 ns=$(echo $OUT | grep -o -P '(?<=ns=).*?(?= (\[time))')
 echo 0 1 $N1 $N2 $N3 $M $ns $acc
-OUT=$(../finufft_type2 1 $DIM $N1 $N2 $N3 $M 1e-5)
+OUT=$(../finufft_type2 1 $DIM $N1 $N2 $N3 $M 1e-4)
 acc=$(echo $OUT | grep -o -P '(?<=c is).*')
 ns=$(echo $OUT | grep -o -P '(?<=ns=).*?(?= (\[time))')
 echo 0 2 $N1 $N2 $N3 $M $ns $acc
 
-OUT=$(../finufft_type1 1 $DIM $N1 $N2 $N3 $M 1e-7)
+OUT=$(../finufft_type1 1 $DIM $N1 $N2 $N3 $M 1e-6)
 acc=$(echo $OUT | grep -o -P '(?<=F is).*')
 ns=$(echo $OUT | grep -o -P '(?<=ns=).*?(?= (\[time))')
 echo 0 1 $N1 $N2 $N3 $M $ns $acc
-OUT=$(../finufft_type2 1 $DIM $N1 $N2 $N3 $M 1e-7)
+OUT=$(../finufft_type2 1 $DIM $N1 $N2 $N3 $M 1e-6)
 acc=$(echo $OUT | grep -o -P '(?<=c is).*')
 ns=$(echo $OUT | grep -o -P '(?<=ns=).*?(?= (\[time))')
 echo 0 2 $N1 $N2 $N3 $M $ns $acc
@@ -86,6 +86,15 @@ OUT=$(../cufinufft_type2 1 $DIM $N1 $N2 $N3 $M 1e-6)
 acc=$(echo $OUT | grep -o -P '(?<=c is).*')
 ns=$(echo $OUT | grep -o -P '(?<=ns=).*?(?= (\[time))')
 echo 1 2 $N1 $N2 $N3 $M $ns $acc
+
+#OUT=$(../cufinufft_type1 1 $DIM $N1 $N2 $N3 $M 1e-7)
+#acc=$(echo $OUT | grep -o -P '(?<=F is).*')
+#ns=$(echo $OUT | grep -o -P '(?<=ns=).*?(?= (\[time))')
+#echo 1 1 $N1 $N2 $N3 $M $ns $acc
+#OUT=$(../cufinufft_type2 1 $DIM $N1 $N2 $N3 $M 1e-7)
+#acc=$(echo $OUT | grep -o -P '(?<=c is).*')
+#ns=$(echo $OUT | grep -o -P '(?<=ns=).*?(?= (\[time))')
+#echo 1 2 $N1 $N2 $N3 $M $ns $acc
 
 # CUNFFT
 sh compile_cunfft_diff_tol.sh 1 >/dev/null 2>&1

@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
 	int ier;
 	int N1, N2, N3, M, N;
 	if (argc<4) {
-		fprintf(stderr,"Usage: cufinufft [nupts_distr [dim [N1 N2 N3 [M [tol [method]]]]]\n");
+		fprintf(stderr,"Usage: cufinufft [nupts_distr [dim [N1 N2 N3 [M [tol [method [kerevalmeth]]]]]]\n");
 		return 1;
 	}  
 	double w;
@@ -38,6 +38,11 @@ int main(int argc, char* argv[])
 	int method=2;
 	if(argc>8){
 		sscanf(argv[8],"%d",&method);
+	}
+
+	int kerevalmeth=0;
+	if(argc>9){
+		sscanf(argv[9],"%d",&kerevalmeth);
 	}
 
 	cout<<scientific<<setprecision(3);
@@ -100,7 +105,7 @@ int main(int argc, char* argv[])
 	cufinufft_opts opts;
 	ier=cufinufft_default_opts(1, dim, &opts);
 	opts.gpu_method=method;
-	opts.gpu_kerevalmeth=1;
+	opts.gpu_kerevalmeth=kerevalmeth;
 	if(N1==2048){
 		opts.gpu_binsizex=64;
 		opts.gpu_binsizey=64;

@@ -5,6 +5,10 @@
 #include <ctime>        // std::time
 #include <cstdlib> 
 
+#undef FLT
+#undef CPX
+#undef IMA
+
 #ifdef SINGLE
 
 #ifndef FLT
@@ -56,7 +60,7 @@ using namespace Eigen;
  * 	ix, iy, iz: the gap between ith and (i+1)th nonuniform pt data
  *
  */
-void gauss(int N, float *x){
+void gauss(int N, FLT *x){
 	MatrixXd T(N,N);
 	T.setZero();
 	VectorXd beta(N-1);
@@ -110,7 +114,7 @@ void create_nupts(int nupts_distr, int dim, int M, FLT*x, FLT*y, FLT*z, int ix,
 				
 				int m = ceil(pow(M, 1.0/dim));
 				if(m%2==1) m=m+1;
-				float* mug = (float*) malloc(m*sizeof(float));
+				FLT* mug = (FLT*) malloc(m*sizeof(FLT));
 
 				for(int i=0; i<m; i++){
 					mug[i] = cos(M_PI*((i+1)- 0.5)/m);
@@ -129,7 +133,7 @@ void create_nupts(int nupts_distr, int dim, int M, FLT*x, FLT*y, FLT*z, int ix,
 				}
 
 				if(dim == 2){
-					float* pg  = (float*) malloc(m*sizeof(float));
+					FLT* pg  = (FLT*) malloc(m*sizeof(FLT));
 					for(int i=0; i<m; i++){
 						pg[i]  = 2*M_PI*(i+1)/m;
 					}
@@ -148,17 +152,17 @@ void create_nupts(int nupts_distr, int dim, int M, FLT*x, FLT*y, FLT*z, int ix,
 				}
 				if(dim == 3){
 					int mp = 2*m;
-					float* pg  = (float*) malloc(mp*sizeof(float));
+					FLT* pg  = (FLT*) malloc(mp*sizeof(FLT));
 					for(int i=0; i<mp; i++){
 						pg[i]  = 2*M_PI*(i+1)/mp;
 					}
 					int mr = m/2; 
-					float* rg = (float*) malloc(mr*sizeof(float));
+					FLT* rg = (FLT*) malloc(mr*sizeof(FLT));
 					gauss(mr, rg);
 					for(int i=0; i<mr; i++){
 						rg[i] = scale*(1+rg[i])/2.0;
 					}
-					float* sthg = (float*) malloc(m*sizeof(float));
+					FLT* sthg = (FLT*) malloc(m*sizeof(FLT));
 					for(int i=0; i<m; i++){
 						sthg[i] = sqrt(1 - mug[i]*mug[i]);
 					}
@@ -203,7 +207,7 @@ void create_data_type1(int nupts_distr, int dim, int M, FLT* x, FLT* y, FLT* z,
 {
 	create_nupts(nupts_distr, dim, M, x, y, z, ix, iy, iz, scale, N1, N2, N3);
 	for (int i = 0; i < M; i++) {
-		c[i] = std::complex<float>(1.0,1.0);
+		c[i] = std::complex<FLT>(1.0,1.0);
 	}
 }
 
@@ -213,7 +217,7 @@ void create_data_type2(int nupts_distr, int dim, int M, FLT* x, FLT* y, FLT* z,
 {
 	create_nupts(nupts_distr, dim, M, x, y, z, ix, iy, iz, scale, N1, N2, N3);
 	for (int i = 0; i < Nmodes[0]*Nmodes[1]*Nmodes[2]; i++) {
-		f[i] = std::complex<float>(1.0,1.0);
+		f[i] = std::complex<FLT>(1.0,1.0);
 	}
 }
 
@@ -296,13 +300,13 @@ void accuracy_check_type1(int lib, int dim, int iflag, int N1, int N2, int N3, i
 		printf("[acc check] one mode: abs err in F[%ld,%ld,%ld] is %.3g\n",
 				(int)nt1,(int)nt2,(int)nt3, abs(Ft-fk[it]));
 	}
-	if( N<1e5){
+	if( N<1e8){
 		CPX* Ft = (CPX*)malloc(sizeof(CPX)*N);
 		if(dim==2)
 			dirft2d1(lib,M,x,y,ix,iy,c,iflag,N1,N2,Ft);
 		if(dim==3)
 			dirft3d1(lib,M,x,y,z,ix,iy,iz,c,iflag,N1,N2,N3,Ft);
-		float err = relerrtwonorm(N,Ft,fk);
+		FLT err = relerrtwonorm(N,Ft,fk);
 		printf("[acc check] dirft: rel l2-err of result F is %.3g\n",err);
 		free(Ft);
 	}
@@ -344,13 +348,13 @@ void accuracy_check_type2(int lib, int dim, int iflag, int N1, int N2, int N3,
 	printf("[acc check] one targ: rel err in c[%ld] is %.3g\n",(int64_t)jt,abs(c[jt]-ct)/infnorm(M,c));
 	printf("[acc check] one targ: abs err in c[%ld] is %.3g\n",(int64_t)jt,abs(c[jt]-ct));
 
-	if(N<1e5){
+	if(N<1e8){
 		CPX* Ct = (CPX*)malloc(sizeof(CPX)*M);
 		if(dim==2)
 			dirft2d2(lib,M,x,y,ix,iy,Ct,iflag,N1,N2,fk);
 		if(dim==3)
 			dirft3d2(lib,M,x,y,z,ix,iy,iz,Ct,iflag,N1,N2,N3,fk);
-		float err = relerrtwonorm(M,Ct,c);
+		FLT err = relerrtwonorm(M,Ct,c);
 		printf("[acc check] dirft: rel l2-err of result c is %.3g\n",err);
 	}
 }

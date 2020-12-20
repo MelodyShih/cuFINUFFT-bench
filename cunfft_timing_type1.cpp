@@ -6,7 +6,6 @@
  */
 
 #include <stdarg.h>
-#include <float.h>
 #include <unistd.h> // get current dir
 #include <cunfft_util.h>
 #include <cunfft.h>
@@ -48,12 +47,12 @@ int main(int argc, char** argv)
 	}
 
 #ifdef ACCURACY
-	int ns = std::ceil(-log10(tol/10.0));;
-	if(2*CUT_OFF+2 != ns){
-		printf("2CUTOFF+2 (CUTOFF=%d) is not equal to ns (ns=%d)\n", CUT_OFF, ns);
+	int ns = std::ceil(-log10(tol/(float)10.0));;
+	if(2*CUT_OFF+1 != ns){
+		printf("2CUTOFF+1 (CUTOFF=%d) is not equal to ns (ns=%d)\n", CUT_OFF, ns);
 		return 0;
 	}
-	printf("[acc check] ns=%d\n", 2*CUT_OFF+2);
+	printf("[acc check] ns=%d\n", 2*CUT_OFF+1);
 #endif 
 	simple_test_cunfft_2d_Ad(nupts_distr, dim, N1, N2, N3, M);
 

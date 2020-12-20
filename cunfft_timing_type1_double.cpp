@@ -12,17 +12,16 @@
 #include <cunfft_kernel.cuh>
 
 #include <limits.h>
-#include <float.h>
 #include "utils.h"
 #include "create_data.cpp"
 
 
-void simple_test_cunfft_2d(int nupts_distr,int dim, int N1, int N2, int N3, 
+void simple_test_cunfft_2d_Ad(int nupts_distr,int dim, int N1, int N2, int N3, 
 	int M);
 int main(int argc, char** argv)
 {
 	if (argc<4) {
-		fprintf(stderr,"Usage: cunfft_type2 [nupts_distr [dim [N1 N2 N3 [M]]\n");
+		fprintf(stderr,"Usage: cunfft [nupts_distr [dim [N1 N2 N3 [M]]\n");
 		return 1;
 	}
 	int dim=3;
@@ -41,26 +40,26 @@ int main(int argc, char** argv)
 		sscanf(argv[6],"%lf",&w); M  = (int)w;  // so can read 1e6 right!
 	}
 
-	float tol=1e-6;
+	double tol=1e-6;
 	if(argc>7){
-		sscanf(argv[7],"%lf",&w); tol  = (float)w;
+		sscanf(argv[7],"%lf",&w); tol  = (double)w;
 	}
 
 #ifdef ACCURACY
-	int ns = std::ceil(-log10(tol/(float)10.0));;
+	int ns = std::ceil(-log10(tol/(double)10.0));;
 	if(2*CUT_OFF+1 != ns){
-		printf("2CUTOFF+1 is not equal to ns\n");
+		printf("2CUTOFF+1 (CUTOFF=%d) is not equal to ns (ns=%d)\n", CUT_OFF, ns);
 		return 0;
 	}
 	printf("[acc check] ns=%d\n", 2*CUT_OFF+1);
 #endif 
-	simple_test_cunfft_2d(nupts_distr, dim, N1, N2, N3, M);
+	simple_test_cunfft_2d_Ad(nupts_distr, dim, N1, N2, N3, M);
 
 	return EXIT_SUCCESS;
 
 }
 
-void simple_test_cunfft_2d(int nupts_distr,int dim, int N1, int N2, int N3, 
+void simple_test_cunfft_2d_Ad(int nupts_distr,int dim, int N1, int N2, int N3, 
 		int M)
 {
 	resetDevice();
@@ -70,52 +69,51 @@ void simple_test_cunfft_2d(int nupts_distr,int dim, int N1, int N2, int N3,
 	N[1]=N2;
 	N[2]=N3;
 
-	int Nmodes[3];
-	Nmodes[0]=N1;
-	Nmodes[1]=N2;
-	Nmodes[2]=N3;
-
 	{
 		cufftHandle fftplan;
+	        int nf2=1;
         	int nf1=1;
 	    cufftPlan1d(&fftplan,nf1,CUFFT_C2C,1);
 	}
 
 	cunfft_plan p;
+	
 	GPUTimer t=getTimeGPU();
 	cunfft_init(&p,dim,N,M);
 	double totalgpumem = elapsedGPUTime(t,getTimeGPU());
 	totalgpumem -= p.CUNFFTTimes.runTime; // remove cpu memory allocation time
 
 	/* create random data */
-	create_data_type2(nupts_distr, dim, M, &p.x[0], &p.x[1], &p.x[2], dim, dim, 
-					  dim, Nmodes, (std::complex<float>*) &p.f_hat[0], 0.5, N1, N2, N3);
+	create_data_type1(nupts_distr, dim, M, &p.x[0], &p.x[1], &p.x[2], 
+			dim, dim, dim, (std::complex<double> *)&p.f[0], 0.5, N1, N2, N3);
+
+	int numOfRuns=1;
 
 	t=getTimeGPU();
-	copyDataToDevice(&p);
+	copyDataToDeviceAd(&p);
 	totalgpumem += elapsedGPUTime(t,getTimeGPU());
 
 	t=getTimeGPU();
-	cunfft_transform(&p);
-	double exec= elapsedGPUTime(t,getTimeGPU());
+	cunfft_adjoint(&p);
+	double exec = elapsedGPUTime(t,getTimeGPU());
 	totalgpumem += exec;
 
 	t=getTimeGPU();
-	copyDataToHost(&p);
+	copyDataToHostAd(&p);
 	totalgpumem += elapsedGPUTime(t,getTimeGPU());
 
-	printf("[time   ] unspread: \t%.3g s\n", p.CUNFFTTimes.time_CONV);
-	printf("[time   ] fft: \t\t%.3g s\n",    p.CUNFFTTimes.time_FFT);
-	printf("[time   ] convolve: \t%.3g s\n", p.CUNFFTTimes.time_ROC);
-	printf("[time   ] exec: %.3g s\n", exec);
+	printf("[time   ] spread: \t%.3g s\n",     p.CUNFFTTimes.time_CONV);
+	printf("[time   ] fft: \t\t%.3g s\n",      p.CUNFFTTimes.time_FFT);
+	printf("[time   ] deconvolve: \t%.3g s\n", p.CUNFFTTimes.time_ROC);
+	printf("[time   ] exec: \t%.3g s\n",       exec);
 	printf("[time   ] total+gpumem: \t%.3g s\n", totalgpumem);
 
 #ifdef ACCURACY
-	accuracy_check_type2(3, dim, -1, N1, N2, N3, M, 
+	accuracy_check_type1(3, dim, +1, N1, N2, N3, M, 
 						 &p.x[0], &p.x[1], &p.x[2],dim, dim, dim, 
-				         (std::complex<float> *)&p.f[0], 
-						 (std::complex<float> *)&p.f_hat[0], 2*M_PI);
+				         (std::complex<double> *)&p.f[0], 
+						 (std::complex<double> *)p.f_hat, 2*M_PI);
+	//print_solution_type1(3, N1, N2, N3, (std::complex<double> *)p.f_hat);
 #endif
-
 	cunfft_finalize(&p);
 }

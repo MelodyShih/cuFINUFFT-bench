@@ -4,6 +4,7 @@ import socket
 import datetime
 import numpy as np
 import re
+import sys
 
 def find_between( s, first, last ):
     try:
@@ -24,10 +25,10 @@ def has_gpu():
 def get_hostname():
 	return socket.gethostname()
 
-def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
-	dim=3
+def main(OUTPUT, has_gpu=False, hostname=None, dim=2, resultdir=None):
+	#dim=2
 	reps=3
-	tol_totry     = [1e-7] #1e-14, 1e-10, 1e-6 , 1e-2
+	tol_totry     = [1e-6] #1e-14, 1e-10, 1e-6 , 1e-2
 	cutoff_totry  = [3] #1e-14, 1e-10, 1e-6 , 1e-2
 	nuptsdistr_totry =[1,2,3]
 	if dim == 2:
@@ -132,4 +133,4 @@ def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 if __name__== "__main__":
 	HAS_GPU = has_gpu()
 	HOSTNAME = get_hostname()
-	main(OUTPUT=False,has_gpu=HAS_GPU,hostname=HOSTNAME,resultdir='../results/')
+	main(OUTPUT=False,has_gpu=HAS_GPU,hostname=HOSTNAME,dim=int(sys.argv[-1]),resultdir='../results/')

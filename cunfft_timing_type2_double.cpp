@@ -12,7 +12,6 @@
 #include <cunfft_kernel.cuh>
 
 #include <limits.h>
-#include <float.h>
 #include "utils.h"
 #include "create_data.cpp"
 
@@ -41,13 +40,13 @@ int main(int argc, char** argv)
 		sscanf(argv[6],"%lf",&w); M  = (int)w;  // so can read 1e6 right!
 	}
 
-	float tol=1e-6;
+	double tol=1e-6;
 	if(argc>7){
-		sscanf(argv[7],"%lf",&w); tol  = (float)w;
+		sscanf(argv[7],"%lf",&w); tol  = (double)w;
 	}
 
 #ifdef ACCURACY
-	int ns = std::ceil(-log10(tol/(float)10.0));;
+	int ns = std::ceil(-log10(tol/(FLT)10.0));;
 	if(2*CUT_OFF+1 != ns){
 		printf("2CUTOFF+1 is not equal to ns\n");
 		return 0;
@@ -89,7 +88,7 @@ void simple_test_cunfft_2d(int nupts_distr,int dim, int N1, int N2, int N3,
 
 	/* create random data */
 	create_data_type2(nupts_distr, dim, M, &p.x[0], &p.x[1], &p.x[2], dim, dim, 
-					  dim, Nmodes, (std::complex<float>*) &p.f_hat[0], 0.5, N1, N2, N3);
+					  dim, Nmodes, (std::complex<double>*) &p.f_hat[0], 0.5, N1, N2, N3);
 
 	t=getTimeGPU();
 	copyDataToDevice(&p);
@@ -113,8 +112,8 @@ void simple_test_cunfft_2d(int nupts_distr,int dim, int N1, int N2, int N3,
 #ifdef ACCURACY
 	accuracy_check_type2(3, dim, -1, N1, N2, N3, M, 
 						 &p.x[0], &p.x[1], &p.x[2],dim, dim, dim, 
-				         (std::complex<float> *)&p.f[0], 
-						 (std::complex<float> *)&p.f_hat[0], 2*M_PI);
+				         (std::complex<double> *)&p.f[0], 
+						 (std::complex<double> *)&p.f_hat[0], 2*M_PI);
 #endif
 
 	cunfft_finalize(&p);

@@ -6,10 +6,10 @@ addpath(genpath('/mnt/home/yshih/gpuNUFFT/matlab/demo/utils'));
 addpath(genpath('/mnt/home/yshih/gpuNUFFT/matlab/demo/../../gpuNUFFT'));
 
 % Data parameters
-sizeCoo = [2 Inf];
-fileID = fopen('coo.dat','r');
-formatSpec = '(%f, %f)\n';
-k = fscanf(fileID,formatSpec,sizeCoo);
+%sizeCoo = [2 Inf];
+%fileID = fopen('coo.dat','r');
+%formatSpec = '(%f, %f)\n';
+%k = fscanf(fileID,formatSpec,sizeCoo);
 
 % 2D
 N1=128;
@@ -48,7 +48,7 @@ Fe = exp(1i*2*pi*isign*(n1allmodes(:)*x'+n2allmodes(:)*y'))*c/sqrt(2*N1)/sqrt(2*
 Fe = reshape(Fe, N1, N2);
 
 fprintf('lib type N1 N2 N3 M w reltol\n');
-for kw=2:2:8
+for kw=3:2:7
 	[timeplan timetotalgem fk] = gpunufft_2dtype1(dim, N1, N2, M, k, c, w, kw);
 	fprintf('[w=%2d] 2D type-1: rel err in F[%d,%d] is %.3g\n',kw,nt1,nt2, ...
             abs((fe-fk(nt1+of1,nt2+of2))/max(fk(:))))
@@ -70,7 +70,7 @@ Ce = zeros(M,1);
 for i=1:M
 Ce(i) = sum(f(:).*exp(1i*isign*2*pi*(mm1(:)*x(i)+mm2(:)*y(i))))/sqrt(2*N1)/sqrt(2*N2);
 end
-for kw=2:2:8
+for kw=3:2:7
 	[timeplan timetotalgem c] = gpunufft_2dtype2(dim, N1, N2, M, k, f, w, kw);
 	fprintf('[w=%2d] 2D type-2: rel err in c[%d] is %.3g\n',kw, j,abs((ce-c(j))/max(c(:))))
 	fprintf('[w=%2d] 2D type-2: abs err in c[%d] is %.3g\n',kw, j,abs((ce-c(j))))
@@ -85,9 +85,9 @@ addpath(genpath('/mnt/home/yshih/gpuNUFFT/matlab/demo/utils'));
 addpath(genpath('/mnt/home/yshih/gpuNUFFT/matlab/demo/../../gpuNUFFT'));
 
 % 3D
-N1=8;
-N2=8;
-N3=8;
+N1=16;
+N2=16;
+N3=16;
 dim=3;
 sizeCoo = [3 Inf];
 fileID = fopen('data/DIM_3_NUPTS_1_N_16_M_4096.dat','r');
@@ -120,7 +120,7 @@ Fe = exp(1i*2*pi*isign*(n1allmodes(:)*x'+n2allmodes(:)*y'+n3allmodes(:)*z'))*c..
 Fe = reshape(Fe, N1, N2, N3);
 
 fprintf('lib type N1 N2 N3 M w reltol\n');
-for kw=2:2:8
+for kw=3:2:7
 	[timeplan timetotalgem fk] = gpunufft_3dtype1(dim, N1, N2, N3, M, k, c, w, kw);
 	fprintf('[w=%2d] 3D type-1: rel err in F[%d,%d,%d] is %.3g\n',kw,nt1,nt2,nt3, ...
             abs((fe-fk(nt1+of1,nt2+of2))/max(fk(:))))
@@ -147,7 +147,7 @@ Ce(i) = sum(f(:).*exp(1i*isign*2*pi*(mm1(:)*x(i)+mm2(:)*y(i)+mm3(:)*z(i))))...
         /sqrt(2*N1)/sqrt(2*N2)/sqrt(2*N3);
 end
 
-for kw=2:2:8 % test with different kernel width
+for kw=3:2:7 % test with different kernel width
 	[timeplan timetotalgem c] = gpunufft_3dtype2(dim, N1, N2, N3, M, k, f, w, kw);
 	fprintf('[w=%2d] 3D type-2: rel err in c[%d] is %.3g\n',kw, j,...
             abs((ce-c(j))/max(c(:))))

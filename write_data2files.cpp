@@ -12,15 +12,15 @@ int main(int argc, char** argv)
 	int N1, N2, N3;
 	int M=134217728;
 
-	int N[]={8,16};
-	float density[]={1};
-	int nupts_distr[] = {1};
+	//int N[]={8,16};
+	//float density[]={1};
+	//int nupts_distr[] = {1};
 	//int N[]={64, 128, 256, 512, 1024, 2048};
 	//float density[]={0.1, 1, 10};
 	
-	//int N[]={32, 64, 128, 256};
-	//float density[]={0.1, 1};
-	//int nupts_distr[] = {1,2,3};
+	int N[]={32, 64, 128, 256};
+	float density[]={0.1, 1};
+	int nupts_distr[] = {1,2,3};
 
 	char filename[100];
 
@@ -31,11 +31,11 @@ int main(int argc, char** argv)
 		z = (float*) malloc(M*sizeof(float));
 
 	FILE * pFile;
-	for(int i=0; i<1; i++){
-		for(int d=0; d<1; d++){
-			for(int n=0; n<2; n++){
-				//M = int(floor(pow(N[n],dim)*pow(2,dim)*density[d]));
-				M = pow(N[n],dim);
+	for(int i=0; i<3; i++){
+		for(int d=0; d<2; d++){
+			for(int n=0; n<4; n++){
+				M = int(floor(pow(N[n],dim)*pow(2,dim)*density[d]));
+				//M = pow(N[n],dim);
 				sprintf(filename, "data/DIM_%d_NUPTS_%d_N_%d_M_%d.dat", dim, nupts_distr[i], N[n], M);
 				cout<<filename<<endl;
 #if 1

@@ -42,6 +42,7 @@ int main(int argc, char *argv[]){
 	finufft_default_opts(&opts);
 	opts.debug = 0;// some timing results
 	opts.upsampfac = 2;// some timing results
+	//opts.nthreads = 28;
 
 	float *x, *y, *z;
 	complex<float> *c, *F;  	

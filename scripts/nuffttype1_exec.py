@@ -27,7 +27,7 @@ def get_hostname():
 def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 	dim=3
 	reps=3
-	tol_totry     = [1e-3, 1e-7] #1e-14, 1e-10, 1e-6 , 1e-2
+	tol_totry     = [1e-2, 1e-6] #1e-14, 1e-10, 1e-6 , 1e-2
 	cutoff_totry  = [1, 3] #1e-14, 1e-10, 1e-6 , 1e-2
 	nuptsdistr_totry =[2]
 	if dim == 2:

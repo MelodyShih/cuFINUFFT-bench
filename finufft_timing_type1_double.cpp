@@ -31,9 +31,9 @@ int main(int argc, char *argv[]){
 		sscanf(argv[6],"%lf",&w); M  = (int)w;
 	}
 
-	float tol=1e-6;// desired accuracy
+	double tol=1e-6;// desired accuracy
 	if(argc>7){
-		sscanf(argv[7],"%lf",&w); tol  = (float)w;
+		sscanf(argv[7],"%lf",&w); tol  = (double)w;
 	}
 
 	printf("[info  ] (N1,N2,N3)=(%d,%d,%d), M=%d, tol=%3.1e\n", N1,N2,N3,M,tol);
@@ -45,17 +45,17 @@ int main(int argc, char *argv[]){
 	//opts.nthreads = 28;
 	//opts.spread_debug = 1;
 
-	float *x, *y, *z;
-	complex<float> *c, *F;  	
+	double *x, *y, *z;
+	complex<double> *c, *F;  	
 
-	x = (float *)malloc(sizeof(float)*M);
+	x = (double *)malloc(sizeof(double)*M);
 	if(dim>1)
-		y = (float *)malloc(sizeof(float)*M);
+		y = (double *)malloc(sizeof(double)*M);
 	if(dim>2)
-		z = (float *)malloc(sizeof(float)*M);
+		z = (double *)malloc(sizeof(double)*M);
 
-	c = (complex<float>*)malloc(sizeof(complex<float>)*M);
-	F = (complex<float>*)malloc(sizeof(complex<float>)*N);
+	c = (complex<double>*)malloc(sizeof(complex<double>)*M);
+	F = (complex<double>*)malloc(sizeof(complex<double>)*N);
 
 	create_data_type1(nupts_distr, dim, M, x, y, z, 1, 1, 1, c, M_PI, N1, N2, N3);
 
@@ -67,8 +67,8 @@ int main(int argc, char *argv[]){
 	int type=1,ntrans=1;
 	double totaltime=0;
 	CNTime timer; timer.start();
-	finufftf_plan plan;
-	ier = finufftf_makeplan(type,dim,nmodes,+1,ntrans,tol,&plan,&opts);
+	finufft_plan plan;
+	ier = finufft_makeplan(type,dim,nmodes,+1,ntrans,tol,&plan,&opts);
 #ifdef ACCURACY
 	printf("[acc check] ns=%d\n", plan->spopts.nspread);
 #endif
@@ -77,17 +77,17 @@ int main(int argc, char *argv[]){
 	totaltime += ti;
 	printf("[time  ] finufft makeplan: \t%.3g s\n", ti);
 	timer.start();
-	finufftf_setpts(plan,M,x,y,z,0,NULL,NULL,NULL);
+	finufft_setpts(plan,M,x,y,z,0,NULL,NULL,NULL);
 	ti=timer.elapsedsec();
 	totaltime += ti;
 	printf("[time  ] finufft setpts: \t%.3g s\n", ti);
 	timer.start();
-	finufftf_execute(plan,c,F);
+	finufft_execute(plan,c,F);
 	ti=timer.elapsedsec();
 	totaltime += ti;
 	printf("[time  ] finufft exec: \t\t%.3g s\n", ti);
 	timer.start();
-	finufftf_destroy(plan);
+	finufft_destroy(plan);
 	ti=timer.elapsedsec();
 	totaltime += ti;
 	printf("[time  ] finufft destroy: \t%.3g s\n", ti);

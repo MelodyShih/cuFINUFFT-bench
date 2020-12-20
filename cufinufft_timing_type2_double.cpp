@@ -30,9 +30,9 @@ int main(int argc, char* argv[])
 		sscanf(argv[6],"%lf",&w); M  = (int)w;
 	}
 
-	float tol=1e-6;
+	double tol=1e-6;
 	if(argc>7){
-		sscanf(argv[7],"%lf",&w); tol  = (float)w;
+		sscanf(argv[7],"%lf",&w); tol  = (double)w;
 	}
 	cout<<scientific<<setprecision(3);
 
@@ -44,8 +44,8 @@ int main(int argc, char* argv[])
 	int kerevalmeth=1;
 	if(N1 > 32){
 		kerevalmeth=1;
-		if(N1==64 & M/(8*N1*N2*N3)<1)
-			kerevalmeth=0;
+		//if(N1==64 & M/(8*N1*N2*N3)<1)
+		//	kerevalmeth=0;
 	}
 	else{
 		kerevalmeth=0;
@@ -70,23 +70,23 @@ int main(int argc, char* argv[])
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 
-	float *x, *y, *z;
-	complex<float> *c, *fk;
-	cudaMallocHost(&x, M*sizeof(float));
-	cudaMallocHost(&y, M*sizeof(float));
-	cudaMallocHost(&z, M*sizeof(float));
-	cudaMallocHost(&c, M*ntransf*sizeof(cuFloatComplex));
-	cudaMallocHost(&fk,N1*N2*N3*ntransf*sizeof(cuFloatComplex));
+	double *x, *y, *z;
+	complex<double> *c, *fk;
+	cudaMallocHost(&x, M*sizeof(double));
+	cudaMallocHost(&y, M*sizeof(double));
+	cudaMallocHost(&z, M*sizeof(double));
+	cudaMallocHost(&c, M*ntransf*sizeof(cuDoubleComplex));
+	cudaMallocHost(&fk,N1*N2*N3*ntransf*sizeof(cuDoubleComplex));
 
-	float *d_x, *d_y, *d_z;
-	cuFloatComplex *d_c, *d_fk;
+	double *d_x, *d_y, *d_z;
+	cuDoubleComplex *d_c, *d_fk;
 	cudaEventRecord(start);
  	{
-		cudaMalloc(&d_x,M*sizeof(float));
-		cudaMalloc(&d_y,M*sizeof(float));
-		cudaMalloc(&d_z,M*sizeof(float));
-		cudaMalloc(&d_c,M*ntransf*sizeof(cuFloatComplex));
-		cudaMalloc(&d_fk,N1*N2*N3*ntransf*sizeof(cuFloatComplex));
+		cudaMalloc(&d_x,M*sizeof(double));
+		cudaMalloc(&d_y,M*sizeof(double));
+		cudaMalloc(&d_z,M*sizeof(double));
+		cudaMalloc(&d_c,M*ntransf*sizeof(cuDoubleComplex));
+		cudaMalloc(&d_fk,N1*N2*N3*ntransf*sizeof(cuDoubleComplex));
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
@@ -97,23 +97,30 @@ int main(int argc, char* argv[])
 
 	cudaEventRecord(start);
  	{
-		cudaMemcpy(d_x,x,M*sizeof(float),cudaMemcpyHostToDevice);
-		cudaMemcpy(d_y,y,M*sizeof(float),cudaMemcpyHostToDevice);
-		cudaMemcpy(d_z,z,M*sizeof(float),cudaMemcpyHostToDevice);
-		cudaMemcpy(d_fk,fk,N1*N2*N3*ntransf*sizeof(cuFloatComplex),cudaMemcpyHostToDevice);
+		cudaMemcpy(d_x,x,M*sizeof(double),cudaMemcpyHostToDevice);
+		cudaMemcpy(d_y,y,M*sizeof(double),cudaMemcpyHostToDevice);
+		cudaMemcpy(d_z,z,M*sizeof(double),cudaMemcpyHostToDevice);
+		cudaMemcpy(d_fk,fk,N1*N2*N3*ntransf*sizeof(cuDoubleComplex),cudaMemcpyHostToDevice);
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&milliseconds, start, stop);
 	gpumemtime+=milliseconds;
 
-	cufinufftf_plan dplan;
+	cufinufft_plan dplan;
 	cufinufft_opts opts;
 	ier=cufinufft_default_opts(2, dim, &opts);
 
 	opts.gpu_method=1;
 	opts.gpu_kerevalmeth=kerevalmeth;
 	opts.gpu_sort=1;
+
+	if(dim==3){
+		opts.gpu_binsizex=16;
+		opts.gpu_binsizey=8;
+		opts.gpu_binsizez=4;
+		opts.gpu_maxsubprobsize=1024;
+	}
 
 	int ns = std::ceil(-log10(tol/10.0));//spread width
 	printf("[info  ] (N1,N2,N3)=(%d,%d,%d), M=%d, tol=%3.1e, spreadwidth=%d\n", 
@@ -136,8 +143,9 @@ int main(int argc, char* argv[])
 
 	cudaEventRecord(start);
 	{
-		ier=cufinufftf_makeplan(2, dim, nmodes, iflag, ntransf, tol, 
+		ier=cufinufft_makeplan(2, dim, nmodes, iflag, ntransf, tol, 
 				ntransfcufftplan, &dplan, &opts);
+		if(ier > 0) return 0;
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
@@ -150,7 +158,7 @@ int main(int argc, char* argv[])
 
 	cudaEventRecord(start);
 	{
-		ier=cufinufftf_setpts(M, d_x, d_y, d_z, 0, NULL, NULL, NULL, dplan);
+		ier=cufinufft_setpts(M, d_x, d_y, d_z, 0, NULL, NULL, NULL, dplan);
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
@@ -160,7 +168,7 @@ int main(int argc, char* argv[])
 
 	cudaEventRecord(start);
 	{
-		ier=cufinufftf_execute(d_c, d_fk, dplan);
+		ier=cufinufft_execute(d_c, d_fk, dplan);
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
@@ -170,7 +178,7 @@ int main(int argc, char* argv[])
 
 	cudaEventRecord(start);
 	{
-		ier=cufinufftf_destroy(dplan);
+		ier=cufinufft_destroy(dplan);
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
@@ -183,7 +191,7 @@ int main(int argc, char* argv[])
 
 	cudaEventRecord(start);
 	{
-		cudaMemcpy(c,d_c,M*ntransf*sizeof(cuFloatComplex),cudaMemcpyDeviceToHost);
+		cudaMemcpy(c,d_c,M*ntransf*sizeof(cuDoubleComplex),cudaMemcpyDeviceToHost);
 	}
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
