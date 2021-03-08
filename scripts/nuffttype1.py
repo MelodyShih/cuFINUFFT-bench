@@ -29,13 +29,14 @@ def main(OUTPUT, has_gpu=False, hostname=None, dim=2, resultdir=None):
 	#dim=2
 	reps=3
 	tol_totry     = [1e-2] #[1e-7] #1e-14, 1e-10, 1e-6 , 1e-2
-	cutoff_totry  = [1] #[3]
-	nuptsdistr_totry =[1,2,3]
+	nuptsdistr_totry =[2]
 	if dim == 2:
-		density_totry = [0.1, 1, 10] #0.1, 1, 10
+		cutoff_totry  = [3] #[3]
+		density_totry = [1] #0.1, 1, 10
 		N1_totry      = [64, 128, 256, 512, 1024, 2048] #128, ... ,4096 
 	if dim == 3:
-		density_totry = [0.1,1] #0.1, 1, 10
+		cutoff_totry  = [6]
+		density_totry = [1] #0.1, 1, 10
 		N1_totry      = [32, 64, 128, 256] #128, ... ,4096 
 
 	print('nupts code den N1 N2 N3 M tol exec total totalgpumem')

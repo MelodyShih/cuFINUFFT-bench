@@ -2,3 +2,5 @@ finufft
 cufinufft
 cunfft
 *.o
+*.bin
+*.dat

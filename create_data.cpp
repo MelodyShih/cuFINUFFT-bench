@@ -1,6 +1,7 @@
 #include <cuComplex.h>
 #include <Eigen/Dense>
 #include <iostream>
+#include <stdio.h>
 #include <vector>       // std::vector
 #include <ctime>        // std::time
 #include <cstdlib> 
@@ -92,6 +93,7 @@ void create_nupts(int nupts_distr, int dim, int M, FLT*x, FLT*y, FLT*z, int ix,
 	switch(nupts_distr){
 		case 1:
 			{
+				srand (0);
 				for (int i = 0; i < M; i++) {
 					x[i*ix] = scale*randm11();
 					if(dim > 1){
@@ -110,7 +112,7 @@ void create_nupts(int nupts_distr, int dim, int M, FLT*x, FLT*y, FLT*z, int ix,
   				// set some values:
   				for (int i=0; i<M; ++i) vecshuff.push_back(i); // 1 2 3 4 5 6 7 8 9
   				// using built-in random generator:
-  				//std::random_shuffle ( vecshuff.begin(), vecshuff.end() );
+  				std::random_shuffle ( vecshuff.begin(), vecshuff.end() );
 				
 				int m = ceil(pow(M, 1.0/dim));
 				if(m%2==1) m=m+1;
@@ -265,6 +267,24 @@ FLT relerrtwonorm(int n, CPX* a, CPX* b)
   return sqrt(err/nrm);
 }
 
+FLT relerrtwonorm_cunfft(int n1, int n2, int n3, CPX* ftrue, CPX* fapprox)
+// ||a-b||_2 / ||a||_2
+{
+  FLT err = 0.0, nrm = 0.0;
+  for (int k=0; k<n3; k++){
+    for (int j=0; j<n2; j++){
+      for (int i=0; i<n3; i++){
+        int idxc = k+j*n3+i*n3*n2;
+        int idx = i+j*n1+k*n1*n2;
+        nrm += real(conj(ftrue[idx])*ftrue[idx]);
+        CPX diff = ftrue[idx]-fapprox[idxc];
+        err += real(conj(diff)*diff);
+      }
+    }
+  }
+  return sqrt(err/nrm);
+}
+
 
 void accuracy_check_type1(int lib, int dim, int iflag, int N1, int N2, int N3, int M, FLT* x, 
 	FLT* y, FLT *z, int ix, int iy, int iz, CPX* c, CPX* fk, FLT scale)
@@ -348,7 +368,7 @@ void accuracy_check_type2(int lib, int dim, int iflag, int N1, int N2, int N3,
 	printf("[acc check] one targ: rel err in c[%ld] is %.3g\n",(int64_t)jt,abs(c[jt]-ct)/infnorm(M,c));
 	printf("[acc check] one targ: abs err in c[%ld] is %.3g\n",(int64_t)jt,abs(c[jt]-ct));
 
-	if(N<1e8){
+	if(N<1e8 && M<1e6){
 		CPX* Ct = (CPX*)malloc(sizeof(CPX)*M);
 		if(dim==2)
 			dirft2d2(lib,M,x,y,ix,iy,Ct,iflag,N1,N2,fk);
@@ -357,4 +377,74 @@ void accuracy_check_type2(int lib, int dim, int iflag, int N1, int N2, int N3,
 		FLT err = relerrtwonorm(M,Ct,c);
 		printf("[acc check] dirft: rel l2-err of result c is %.3g\n",err);
 	}
+}
+
+void write_sol(int type, int nupts, int dim, int N1, int N2, int N3, int M, CPX* c, CPX* fk)
+{
+	char filename[100];
+	FILE * pFile;
+
+	if(type==1){
+		if(dim==2){
+			sprintf(filename, "true_2d1_nupts%d_N%d_M1e7_%d.bin", nupts, N1, sizeof(FLT));
+			pFile = fopen (filename, "wb");
+		}
+		if(dim==3){
+			sprintf(filename, "true_3d1_nupts%d_N%d_M1e7_%d.bin", nupts, N1, sizeof(FLT));
+			pFile = fopen (filename, "wb");
+		}
+		fwrite (fk, sizeof(complex<FLT>), N1*N2*N3, pFile);
+	}
+
+	if(type==2){
+		if(dim==2){
+			sprintf(filename, "true_2d2_nupts%d_N%d_M1e7_%d.bin", nupts, N1, sizeof(FLT));
+			pFile = fopen (filename, "wb");
+		}
+		if(dim==3){
+			sprintf(filename, "true_3d2_nupts%d_N%d_M1e7_%d.bin", nupts, N1, sizeof(FLT));
+			pFile = fopen (filename, "wb");
+		}
+		fwrite (c, sizeof(complex<FLT>), M, pFile);
+	}
+}
+
+FLT calerr(int lib, int type, int nupts, int dim, int N1, int N2, int N3, int M, CPX* c, CPX* fk)
+{
+	char filename[100];
+	FILE * pFile;
+	FLT err;
+	
+	if(type==1){
+		complex<FLT> *fktrue=(complex<FLT>*)malloc(N1*N2*N3*sizeof(complex<FLT>));
+		if(dim==2){
+			sprintf(filename, "true_2d1_nupts%d_N%d_M1e7_%d.bin", nupts, N1, sizeof(FLT));
+			pFile = fopen (filename, "rb");
+		}
+		if(dim==3){
+			sprintf(filename, "true_3d1_nupts%d_N%d_M1e7_%d.bin", nupts, N1, sizeof(FLT));
+			pFile = fopen (filename, "rb");
+		}
+		fread (fktrue, sizeof(complex<FLT>), N1*N2*N3, pFile);
+		if(lib == 3){
+			err = relerrtwonorm_cunfft(N1,N2,N3,fktrue,fk);
+		}else{
+			err = relerrtwonorm(N1*N2*N3,fktrue,fk);
+		}
+	}
+
+	if(type==2){
+		complex<FLT> *ctrue=(complex<FLT>*)malloc(M*sizeof(complex<FLT>));
+		if(dim==2){
+			sprintf(filename, "true_2d2_nupts%d_N%d_M1e7_%d.bin", nupts, N1, sizeof(FLT));
+			pFile = fopen (filename, "rb");
+		}
+		if(dim==3){
+			sprintf(filename, "true_3d2_nupts%d_N%d_M1e7_%d.bin", nupts, N1, sizeof(FLT));
+			pFile = fopen (filename, "rb");
+		}
+		fread (ctrue, sizeof(complex<FLT>), M, pFile);
+		err = relerrtwonorm(M,ctrue,c);
+	}
+	return err;
 }

@@ -2,8 +2,8 @@ CC=gcc
 CXX=g++
 NVCC=nvcc
 
-NVCCFLAGS=-arch=sm_70 -DGPU -DACCURACY
-CXXFLAGS=-DACCURACY
+NVCCFLAGS=-arch=sm_70 -DGPU
+CXXFLAGS=#-DACCURACY
 
 FINUFFT=/mnt/home/yshih/finufft
 CUFINUFFT=/mnt/home/yshih/cufinufft
@@ -111,16 +111,34 @@ finufft_type2_64: finufft_timing_type2_double.cpp
 		-lfinufft -lfftw3 -lfftw3f_omp\
 		-o $@
 
+finufft_write_truesol: finufft_write_truesol.cpp
+	$(CXX) $^ -fopenmp $(CXXFLAGS) -DSINGLE\
+		-I$(EIGEN)/\
+		-I$(FINUFFT)/include \
+		-L$(FINUFFT)/lib\
+		-lfinufft -lfftw3f -lfftw3f_omp\
+		-o $@
+
+finufft_write_truesol_64: finufft_write_truesol_64.cpp
+	$(CXX) $^ -fopenmp $(CXXFLAGS)\
+		-I$(EIGEN)/\
+		-I$(FINUFFT)/include \
+		-L$(FINUFFT)/lib\
+		-lfinufft -lfftw3 -lfftw3f_omp\
+		-o $@
+
 writedata: write_data2files.cpp
 	$(CXX) $^ -DSINGLE\
 		-I$(EIGEN)/\
 		-o $@
 
-double: cunfft_type1_64 cufinufft_type1_64 finufft_type1_64\
-        cunfft_type2_64 cufinufft_type2_64 finufft_type2_64
+double: cufinufft_type1_64 finufft_type1_64\
+        cufinufft_type2_64 finufft_type2_64\
+        cunfft_type1_64 cunfft_type2_64 finufft_write_truesol_64
 
 single: cunfft_type1 cufinufft_type1 finufft_type1\
-        cunfft_type2 cufinufft_type2 finufft_type2
+        cunfft_type2 cufinufft_type2 finufft_type2\
+        finufft_write_truesol
 clean: 
 	rm cunfft_type1 
 	rm cufinufft_type1
@@ -128,3 +146,11 @@ clean:
 	rm cunfft_type2 
 	rm cufinufft_type2
 	rm finufft_type2
+	rm cunfft_type1_64 
+	rm cufinufft_type1_64
+	rm finufft_type1_64
+	rm cunfft_type2_64 
+	rm cufinufft_type2_64
+	rm finufft_type2_64
+	rm finufft_write_truesol
+	rm finufft_write_truesol_64

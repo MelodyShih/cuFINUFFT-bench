@@ -6,16 +6,16 @@ addpath(genpath('/mnt/home/yshih/gpuNUFFT/matlab/demo/utils'));
 addpath(genpath('/mnt/home/yshih/gpuNUFFT/matlab/demo/../../gpuNUFFT'));
 
 %% Data parameters
-dim=2;
+dim=3;
 nupts_totry=[1,2,3];
 tol=1e-6;
 if (dim==2)
 	N_totry=[64, 128, 256, 512, 1024, 2048];
-	density_totry=[0.1,1,10];
+	density_totry=[1];
 end
 if (dim==3)
 	N_totry=[32, 64, 128, 256];
-	density_totry=[0.1,1];
+	density_totry=[1];
 end
 
 if (dim==2)
@@ -67,7 +67,7 @@ end
 
 function [timeFTplan, timeFTH] = gpunufft_2dtype2(dim, N1, N2, M, k, f, w)
 	osf = 2;
-	kw = 7; %1 also possible (nearest neighbor) 
+	kw = 3; %1 also possible (nearest neighbor) 
 	sw = 8;
 	atomic = true;
 	textures = true;
@@ -94,7 +94,7 @@ end
 
 function [timeFTplan, timeFTH] = gpunufft_3dtype2(dim, N1, N2, N3, M, k, f, w)
 	osf = 2;
-	kw = 7; %1 also possible (nearest neighbor) 
+	kw = 3; %1 also possible (nearest neighbor) 
 	sw = 8;
 	atomic = true;
 	textures = true;

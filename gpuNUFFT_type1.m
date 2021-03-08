@@ -6,22 +6,22 @@ addpath(genpath('/mnt/home/yshih/gpuNUFFT/matlab/demo/utils'));
 addpath(genpath('/mnt/home/yshih/gpuNUFFT/matlab/demo/../../gpuNUFFT'));
 
 %% Data parameters
-dim=3;
+dim=2;
 nupts_totry=[1,2,3];
 tol=1e-2;
 if (dim==2)
 	N_totry=[64, 128, 256, 512, 1024, 2048];
-	density_totry=[0.1,1,10];
+	density_totry=[1];
 end
 if (dim==3)
 	N_totry=[32, 64, 128, 256];
-	density_totry=[0.1,1];
+	density_totry=[1];
 end
 
 if (dim==2)
 	fileIDwrite = fopen("results/2d1_gpunufft.dat", 'w');
 else
-	fileIDwrite = fopen("results/3d1_1e-2_gpunufft.dat", 'w');
+	fileIDwrite = fopen("results/3d1_gpunufft.dat", 'w');
 end
 
 fprintf(fileIDwrite, 'nupts code den N1 N2 N3 M tol exec total totalgpumem cpuplan');
@@ -68,7 +68,7 @@ end
 
 function [timeFTplan, timeFTH] = gpunufft_2dtype1(dim, N1, N2, M, k, c, w)
 	osf = 2;
-	kw = 7; %1 also possible (nearest neighbor), kernel width
+	kw = 3; %1 also possible (nearest neighbor), kernel width
 	sw = 8;
 	atomic = true;
 	textures = true;

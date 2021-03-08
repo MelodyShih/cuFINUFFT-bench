@@ -3,8 +3,8 @@
 #include <math.h>
 #include <complex>
 
-#include <cufinufft.h>
 #include "create_data.cpp"
+#include <cufinufft.h>
 
 using namespace std;
 
@@ -43,6 +43,11 @@ int main(int argc, char* argv[])
 	int kerevalmeth=0;
 	if(argc>9){
 		sscanf(argv[9],"%d",&kerevalmeth);
+	}
+
+	int sort=0;
+	if(argc>10){
+		sscanf(argv[10],"%d",&sort);
 	}
 
 	cout<<scientific<<setprecision(3);
@@ -105,6 +110,7 @@ int main(int argc, char* argv[])
 	cufinufft_opts opts;
 	ier=cufinufft_default_opts(1, dim, &opts);
 	opts.gpu_method=method;
+	opts.gpu_sort=sort;
 	opts.gpu_kerevalmeth=kerevalmeth;
 	if(N1==2048){
 		opts.gpu_binsizex=64;
@@ -118,6 +124,7 @@ int main(int argc, char* argv[])
 	nmodes[0] = N1;
 	nmodes[1] = N2;
 	nmodes[2] = N3;
+	int type=1;
 
 	cudaEventRecord(start);
  	{
@@ -135,7 +142,7 @@ int main(int argc, char* argv[])
 	CNTime timer; timer.start();
 	cudaEventRecord(start);
 	{
-		ier=cufinufftf_makeplan(1, dim, nmodes, iflag, ntransf, tol,
+		ier=cufinufftf_makeplan(type, dim, nmodes, iflag, ntransf, tol,
 			       maxbatchsize, &dplan, &opts);
 	}
 	cudaEventRecord(stop);
@@ -189,6 +196,10 @@ int main(int argc, char* argv[])
 	printf("[time  ] total+gpumem: %.3g s\n", (totaltime+gpumemtime)/1000);
 
 #ifdef ACCURACY
+	float err;
+	err = calerr(1, type, nupts_distr, dim, N1, N2, N3, M, c, fk);
+	printf("[acc   ] releativeerr: %.3g\n", err);
+
 	accuracy_check_type1(1, dim, iflag, N1, N2, N3, M, x, y, z, 1, 1, 1, c, fk, 1.0);
 	//print_solution_type1(1, N1, N2, N3, fk);
 #endif

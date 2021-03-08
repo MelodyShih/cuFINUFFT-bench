@@ -46,11 +46,6 @@ int main(int argc, char** argv)
 	}
 
 #ifdef ACCURACY
-	int ns = std::ceil(-log10(tol/(double)10.0));;
-	if(2*CUT_OFF+1 != ns){
-		printf("2CUTOFF+1 (CUTOFF=%d) is not equal to ns (ns=%d)\n", CUT_OFF, ns);
-		return 0;
-	}
 	printf("[acc check] ns=%d\n", 2*CUT_OFF+1);
 #endif 
 	simple_test_cunfft_2d_Ad(nupts_distr, dim, N1, N2, N3, M);
@@ -102,16 +97,22 @@ void simple_test_cunfft_2d_Ad(int nupts_distr,int dim, int N1, int N2, int N3,
 	copyDataToHostAd(&p);
 	totalgpumem += elapsedGPUTime(t,getTimeGPU());
 
-	printf("[time   ] spread: \t%.3g s\n",     p.CUNFFTTimes.time_CONV);
-	printf("[time   ] fft: \t\t%.3g s\n",      p.CUNFFTTimes.time_FFT);
-	printf("[time   ] deconvolve: \t%.3g s\n", p.CUNFFTTimes.time_ROC);
-	printf("[time   ] exec: \t%.3g s\n",       exec);
-	printf("[time   ] total+gpumem: \t%.3g s\n", totalgpumem);
+	printf("[time  ] spread: \t%.3g s\n",     p.CUNFFTTimes.time_CONV);
+	printf("[time  ] fft: \t\t%.3g s\n",      p.CUNFFTTimes.time_FFT);
+	printf("[time  ] deconvolve: \t%.3g s\n", p.CUNFFTTimes.time_ROC);
+	printf("[time  ] exec: \t%.3g s\n",       exec);
+	printf("[time  ] total+gpumem: \t%.3g s\n", totalgpumem);
 
 #ifdef ACCURACY
+	double err;
+	int type=1;
+	err = calerr(3, type, nupts_distr, dim, N1, N2, N3, M, 
+                 (std::complex<double> *) p.f, 
+                 (std::complex<double> *) p.f_hat);
+	printf("[acc   ] releativeerr: %.3g\n", err);
 	accuracy_check_type1(3, dim, +1, N1, N2, N3, M, 
 						 &p.x[0], &p.x[1], &p.x[2],dim, dim, dim, 
-				         (std::complex<double> *)&p.f[0], 
+			             (std::complex<double> *)&p.f[0], 
 						 (std::complex<double> *)p.f_hat, 2*M_PI);
 	//print_solution_type1(3, N1, N2, N3, (std::complex<double> *)p.f_hat);
 #endif

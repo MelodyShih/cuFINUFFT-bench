@@ -41,22 +41,14 @@ int main(int argc, char* argv[])
 		sscanf(argv[8],"%d",&method);
 	}
 
-	int kerevalmeth=1;
-	if(N1 > 32){
-		kerevalmeth=1;
-		//if(N1==64 & M/(8*N1*N2*N3)<1)
-		//	kerevalmeth=0;
-	}
-	else{
-		kerevalmeth=0;
-	}
+	int kerevalmeth=0;
 	if(argc>9){
 		sscanf(argv[9],"%d",&kerevalmeth);
 	}
 
 	int ntransf = 1;
 	int ntransfcufftplan = 1;
-	int iflag=1;
+	int iflag=-1;
 
 	int nmodes[3];
 	nmodes[0] = N1;
@@ -200,6 +192,11 @@ int main(int argc, char* argv[])
 	printf("[time  ] total+gpumem: %.3g s\n", (totaltime+gpumemtime)/1000);
 
 #ifdef ACCURACY
+	double err;
+	int type=2;
+	err = calerr(1, type, nupts_distr, dim, N1, N2, N3, M, c, fk);
+	printf("[acc   ] releativeerr: %.3g\n", err);
+
 	accuracy_check_type2(1, dim, iflag, N1, N2, N3, M, x, y, z, 1, 1, 1, c, fk, 1.0);
 #endif
 

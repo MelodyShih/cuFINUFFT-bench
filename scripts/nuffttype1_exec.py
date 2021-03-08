@@ -1,5 +1,6 @@
 import os
 import subprocess
+from subprocess import Popen, PIPE
 import socket
 import datetime
 import numpy as np
@@ -27,17 +28,17 @@ def get_hostname():
 def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 	dim=3
 	reps=3
-	tol_totry     = [1e-2, 1e-6] #1e-14, 1e-10, 1e-6 , 1e-2
-	cutoff_totry  = [1, 3] #1e-14, 1e-10, 1e-6 , 1e-2
+	tol_totry     = [1e-2, 1e-5] #1e-14, 1e-10, 1e-6 , 1e-2
+	cutoff_totry  = [1, 6] #1e-14, 1e-10, 1e-6 , 1e-2
 	nuptsdistr_totry =[2]
 	if dim == 2:
 		density_totry = [0.1, 1, 10] #0.1, 1, 10
 		N1_totry      = [64, 128, 256, 512, 1024, 2048] #128, ... ,4096 
 	if dim == 3:
-		density_totry = [0.1,1] #0.1, 1, 10
-		N1_totry      = [32, 64, 128, 256] #128, ... ,4096 
+		density_totry = [0.1, 1] #0.1, 1, 10
+		N1_totry      = [32, 256] #128, ... ,4096 
 
-	print('nupts code den N1 N2 N3 M tol spread fft deconvolve other')
+	print('pid nupts code den N1 N2 N3 M tol spread fft deconvolve other')
 	for nupts_distr in nuptsdistr_totry:
 		for t,tol in enumerate(tol_totry):
 			if has_gpu is True:
@@ -60,9 +61,14 @@ def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 					for nn in range(reps):
 						tt = 0.0
 						if has_gpu is not True:
-							finufft_output=subprocess.check_output(["./finufft_type1",\
+							pipe = Popen(["./finufft_type1",\
 								str(nupts_distr),str(dim),str(N1),str(N2),str(N3),\
-								str(M),str(tol)], cwd="../", stderr=subprocess.STDOUT).decode("utf-8")
+								str(M),str(tol)], stdout=PIPE, cwd="../", stderr=subprocess.STDOUT)
+							finufft_output = pipe.communicate()[0]
+							finufft_pid = pipe.pid
+							#finufft_output=subprocess.check_output(["./finufft_type1",\
+							#	str(nupts_distr),str(dim),str(N1),str(N2),str(N3),\
+							#	str(M),str(tol)], cwd="../", stderr=subprocess.STDOUT).decode("utf-8")
 							if finufft_output is not None:
 								finufft_t = float(find_between(finufft_output, \
 									"spread:", "s"))
@@ -80,21 +86,38 @@ def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 								finufft_tnow[2] = min(finufft_tnow[2],finufft_t[2])
 						if has_gpu is True:
 							try:
-								cufinufft_m1_output=subprocess.check_output(["./cufinufft_type1",\
-									str(nupts_distr),str(dim),str(N1),str(N2),str(N3),\
-									str(M),str(tol),str(1)], cwd="../").decode("utf-8")
+								pipe = Popen(["./cufinufft_type1",\
+										     str(nupts_distr),str(dim),str(N1),str(N2),str(N3),\
+										     str(M),str(tol),str(1)]
+											,stdout=PIPE,cwd="../")
+								cufinufft_m1_output= pipe.communicate()[0]
+								cufinufft_m1_pid = pipe.pid
+								#cufinufft_m1_output=subprocess.check_output(["./cufinufft_type1",\
+								#	str(nupts_distr),str(dim),str(N1),str(N2),str(N3),\
+								#	str(M),str(tol),str(1)], cwd="../").decode("utf-8")
 							except subprocess.CalledProcessError as e:
 								cufinufft_m1_output=None
 							try:
-								cufinufft_m2_output=subprocess.check_output(["./cufinufft_type1",\
-									str(nupts_distr),str(dim),str(N1),str(N2),str(N3),\
-									str(M),str(tol),str(2)], cwd="../",stderr=subprocess.STDOUT).decode("utf-8")
+								pipe = Popen(["./cufinufft_type1",\
+										     str(nupts_distr),str(dim),str(N2),str(N2),str(N3),\
+										     str(M),str(tol),str(2)]
+											,stdout=PIPE,cwd="../")
+								cufinufft_m2_output= pipe.communicate()[0]
+								cufinufft_m2_pid = pipe.pid
+								#cufinufft_m2_output=subprocess.check_output(["./cufinufft_type1",\
+								#	str(nupts_distr),str(dim),str(N1),str(N2),str(N3),\
+								#	str(M),str(tol),str(2)], cwd="../",stderr=subprocess.STDOUT).decode("utf-8")
 							except subprocess.CalledProcessError as e:
 								cufinufft_m2_output=None
 							try:
-								cunfft_output=subprocess.check_output(["./cunfft_type1",\
-									str(nupts_distr),str(dim),str(N1),str(N2),str(N3),\
-									str(M),str(tol)], cwd="../").decode("utf-8")
+								pipe = Popen(["./cunfft_type1",\
+									         str(nupts_distr),str(dim),str(N1),str(N2),str(N3),\
+									         str(M),str(tol)],stdout=PIPE, cwd="../")
+								cunfft_output= pipe.communicate()[0]
+								cunfft_pid = pipe.pid
+								#cunfft_output=subprocess.check_output(["./cunfft_type1",\
+								#	str(nupts_distr),str(dim),str(N1),str(N2),str(N3),\
+								#	str(M),str(tol)], cwd="../").decode("utf-8")
 							except subprocess.CalledProcessError as e:
 								cunfft_output=None
 							if cufinufft_m1_output is not None:
@@ -153,18 +176,18 @@ def main(OUTPUT, has_gpu=False, hostname=None, resultdir=None):
 								cunfft_tnow[1] = min(cunfft_tnow[1],cunfft_t[1])
 								cunfft_tnow[2] = min(cunfft_tnow[2],cunfft_t[2])
 					if has_gpu is not True:
-						print('%d %d %3.1e %4d %4d %4d %10d %5.3e %5.3e %5.3e %5.3e %5.3e' \
-							%(nupts_distr, 0, density, N1, N2, N3, M, tol, \
+						print('%d %d %d %3.1e %4d %4d %4d %10d %5.3e %5.3e %5.3e %5.3e %5.3e' \
+							%(finufft_pid, nupts_distr, 0, density, N1, N2, N3, M, tol, \
                               finufft_tnow[0], finufft_tnow[1], finufft_tnow[2], 0))
 					if has_gpu is True:
-						print('%d %d %3.1e %4d %4d %4d %10d %5.3e %5.3e %5.3e %5.3e %5.3e' \
-							%(nupts_distr, 1, density, N1, N2, N3, M, tol, cufinufft_m1_tnow[1], \
+						print('%d %d %d %3.1e %4d %4d %4d %10d %5.3e %5.3e %5.3e %5.3e %5.3e' \
+							%(cufinufft_m1_pid, nupts_distr, 1, density, N1, N2, N3, M, tol, cufinufft_m1_tnow[1], \
 							  cufinufft_m1_tnow[2], cufinufft_m1_tnow[3], cufinufft_m1_tnow[0]))
-						print('%d %d %3.1e %4d %4d %4d %10d %5.3e %5.3e %5.3e %5.3e %5.3e' \
-							%(nupts_distr, 2, density, N1, N2, N3, M, tol, cufinufft_m2_tnow[1], \
+						print('%d %d %d %3.1e %4d %4d %4d %10d %5.3e %5.3e %5.3e %5.3e %5.3e' \
+							%(cufinufft_m2_pid, nupts_distr, 2, density, N1, N2, N3, M, tol, cufinufft_m2_tnow[1], \
 							  cufinufft_m2_tnow[2], cufinufft_m2_tnow[3], cufinufft_m2_tnow[0]))
-						print('%d %d %3.1e %4d %4d %4d %10d %5.3e %5.3e %5.3e %5.3e %5.3e' \
-							%(nupts_distr, 3, density, N1, N2, N3, M, tol, cunfft_tnow[0], \
+						print('%d %d %d %3.1e %4d %4d %4d %10d %5.3e %5.3e %5.3e %5.3e %5.3e' \
+							%(cunfft_pid, nupts_distr, 3, density, N1, N2, N3, M, tol, cunfft_tnow[0], \
 							  cunfft_tnow[1], cunfft_tnow[2], 0))
 
 if __name__== "__main__":

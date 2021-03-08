@@ -197,6 +197,11 @@ int main(int argc, char* argv[])
 	printf("[time  ] total+gpumem: %.3g s\n", (totaltime+gpumemtime)/1000);
 
 #ifdef ACCURACY
+	double err;
+	int type=1;
+	err = calerr(1, type, nupts_distr, dim, N1, N2, N3, M, c, fk);
+	printf("[acc   ] releativeerr: %.3g\n", err);
+
 	accuracy_check_type1(1, dim, iflag, N1, N2, N3, M, x, y, z, 1, 1, 1, c, fk, 1.0);
 	//print_solution_type1(1, N1, N2, N3, fk);
 #endif
